@@ -4,8 +4,6 @@
 #include <string>
 #include <unordered_map>
 
-
-
 namespace Piece {
     enum Type {
         EMPTY,
@@ -19,9 +17,9 @@ namespace Piece {
     };
 
     enum Color {
-        NONE,
         WHITE,
         BLACK,
+        NONE,
         BOTH
     };
 
@@ -60,6 +58,16 @@ namespace Piece {
 
 }
 
+int bitscan_forward(uint64_t x) {
+    return __builtin_ffsll(x) - 1;
+}
+
+int pop_bit(uint64_t& x) {
+    int bit_position = bitscan_forward(x);
+    x ^= 1ULL << bit_position;
+    return bit_position;
+}
+
 enum Square {
     a1, b1, c1, d1, e1, f1, g1, h1,
     a2, b2, c2, d2, e2, f2, g2, h2,
@@ -71,6 +79,17 @@ enum Square {
     a8, b8, c8, d8, e8, f8, g8, h8
 };
 
+/*
+  * 56 57 58 59 60 61 62 63
+  * 48 49 50 51 52 53 54 55
+  * 40 41 42 43 44 45 46 47
+  * 32 33 34 35 36 37 38 39
+  * 24 25 26 27 28 29 30 31
+  * 16 17 18 19 20 21 22 23
+  * 08 09 10 11 12 13 14 15
+  * 00 01 02 03 04 05 06 07
+*/
+
 class Chessboard {
 public:
     const int files = 8;
@@ -78,6 +97,73 @@ public:
     const int total_squares = files * ranks;
     std::array<Piece::Type, 64> pieces_types = {};
     std::array<Piece::Color, 64> pieces_colors = {};
+
+    std::array<uint64_t, 64> KNIGHT_MOVES = {};
+    void initialize_knight_bitboards() {
+        for (int square = 0; square < total_squares; square++) {
+            KNIGHT_MOVES[square] = get_knight_moves(square);
+        }
+    }
+
+    uint64_t get_knight_moves(int square) {
+        std::array<int, 8> knight_offsets= {-17, -15, -10, -6, 6, 10, 15, 17};
+        uint64_t knight_moves = 0;
+        for (int offset: knight_offsets) {
+            int target_square = square + offset;
+            int file_difference = abs(get_file(square) - get_file(target_square));
+
+            if (target_square >= 0 && target_square < total_squares) {
+                if (file_difference == 2 || file_difference == 1) {
+                    knight_moves |= (1ULL << target_square);
+                }
+            }
+        }
+        return knight_moves;
+    }
+
+    std::array<uint64_t, 64> KING_MOVES = {};
+    void initialize_king_bitboards() {
+        for (int square = 0; square < total_squares; square++) {
+            KING_MOVES[square] = get_king_moves(square);
+        }
+    }
+
+    uint64_t get_king_moves(int square) {
+        std::array<int, 8> king_offsets= {-9, -7, 7, 9, -8, -1, 1, 8};
+        uint64_t king_moves = 0;
+        for (int offset: king_offsets) {
+            int target_square = square + offset;
+            int file_difference = abs(get_file(square) - get_file(target_square));
+
+            if (target_square >= 0 && target_square < total_squares && file_difference < 2) {
+                king_moves |= (1ULL << target_square);
+            }
+        }
+        return king_moves;
+    }
+
+    std::array<std::array<uint64_t, 64>, 2> PAWN_ATTACKS = {};
+    void initialize_pawn_bitboards() {
+        for (Piece::Color color: {Piece::Color::WHITE, Piece::Color::BLACK}) {
+            for (int square = 0; square < total_squares; square++) {
+                PAWN_ATTACKS[color][square] = get_pawn_attacks(square, color);
+            }
+        }
+    }
+
+    uint64_t get_pawn_attacks(int square, Piece::Color color) {
+        int offset = pieces_colors[square] == Piece::Color::WHITE? 8: -8;
+        uint64_t pawn_attacks = 0;
+        for (int attack_offset: {offset - 1, offset + 1}) {
+            int target_square = square + attack_offset;
+            int file_difference = abs(get_file(square) - get_file(target_square));
+            if (target_square >= 0 && target_square < total_squares && file_difference == 1) {
+                pawn_attacks |= (1ULL << target_square);
+            }
+        }
+        return pawn_attacks;
+    }
+
 
     void load_position(std::string fen) {
         int square = 56;
@@ -190,15 +276,11 @@ public:
         }
 
         // Taking
-        for (int take_offset: {offset - 1, offset + 1}) {
-            int target_square = square + take_offset;
-            int file_difference = abs(get_file(square) - get_file(target_square));
-            if (target_square >= 0 && target_square < total_squares) {
-                if (file_difference == 1) {
-                    if ((is_occupied(target_square) && are_different_colors(square, target_square)) || target_square == en_passant) {
-                        i++;
-                    }
-                }
+        uint64_t pawn_attacks = PAWN_ATTACKS[pieces_colors[square]][square];
+        while (pawn_attacks != 0) {
+            int target_square = pop_bit(pawn_attacks);
+            if ((is_occupied(target_square) && are_different_colors(square, target_square)) || target_square == en_passant) {
+                i++;
             }
         }
 
@@ -206,20 +288,13 @@ public:
         return i;
     }
 
-    std::array<int, 8> knight_offsets= {-17, -15, -10, -6, 6, 10, 15, 17};
     int generate_knight_moves(int square) {
         int i = 0;
-
-        for (int offset: knight_offsets) {
-            int target_square = square + offset;
-            int file_difference = abs(get_file(square) - get_file(target_square));
-
-            if (target_square >= 0 && target_square < total_squares) {
-                if (file_difference == 2 || file_difference == 1) {
-                    if (is_empty(target_square) || are_different_colors(square, target_square)) {
-                        i++;
-                    }
-                }
+        uint64_t knight_moves = KNIGHT_MOVES[square];
+        while (knight_moves != 0) {
+            int target_square = pop_bit(knight_moves);
+            if (is_empty(target_square) || are_different_colors(square, target_square)) {
+                i++;
             }
         }
         return i;
@@ -272,15 +347,11 @@ public:
     bool long_castle = true;
     int generate_king_moves(int square) {
         int i = 0;
-        for (std::array<int, 4> offset_array: {bishop_directions_offsets, rook_directions_offsets}) {
-            for (int offset: offset_array) {
-                int target_square = square + offset;
-                int file_difference = abs(get_file(square) - get_file(target_square));
-                if (target_square >= 0 && target_square < total_squares && file_difference < 2) {
-                    if (is_empty(target_square) || are_different_colors(square, target_square)) {
-                        i++;
-                    }
-                }
+        uint64_t king_moves = KING_MOVES[square];
+        while (king_moves != 0) {
+            int target_square = pop_bit(king_moves);
+            if (is_empty(target_square) || are_different_colors(square, target_square)) {
+                i++;
             }
         }
 
@@ -297,8 +368,11 @@ public:
 
 int main() {
     auto board = Chessboard();
-    const std::string starting_position_fen = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1";
+    const std::string starting_position_fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R";
     board.load_position(starting_position_fen);
+    board.initialize_knight_bitboards();
+    board.initialize_king_bitboards();
+    board.initialize_pawn_bitboards();
     board.generate_all_moves();
     //board.print();
     return 0;
