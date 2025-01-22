@@ -15,13 +15,26 @@ int Piece::get_piece_color(int piece_index) {
 char Piece::get_piece_symbol(int piece_index) {
     char piece_symbol = ' ';
     switch (get_piece_type(piece_index)) {
-        case PAWN: piece_symbol = 'p';      break;
-        case KNIGHT: piece_symbol = 'n';    break;
-        case BISHOP: piece_symbol = 'b';    break;
-        case ROOK: piece_symbol = 'r';      break;
-        case QUEEN: piece_symbol = 'q';     break;
-        case KING: piece_symbol = 'k';      break;
-        default: piece_symbol = '.';
+        case PAWN:
+            piece_symbol = 'p';
+            break;
+        case KNIGHT:
+            piece_symbol = 'n';
+            break;
+        case BISHOP:
+            piece_symbol = 'b';
+        break;
+        case ROOK:
+            piece_symbol = 'r';
+            break;
+        case QUEEN:
+            piece_symbol = 'q';
+            break;
+        case KING:
+            piece_symbol = 'k';
+            break;
+        default:
+            piece_symbol = '.';
     }
 
     if (get_piece_color(piece_index) == WHITE) {
@@ -33,13 +46,26 @@ char Piece::get_piece_symbol(int piece_index) {
 int Piece::get_piece_from_symbol(char symbol) {
     int piece_index = 0;
     switch (tolower(symbol)) {
-        case 'p': piece_index = PAWN;   break;
-        case 'n': piece_index = KNIGHT; break;
-        case 'b': piece_index = BISHOP; break;
-        case 'r': piece_index = ROOK;   break;
-        case 'q': piece_index = QUEEN;  break;
-        case 'k': piece_index = KING;   break;
-        default: piece_index = NONE;
+        case 'p':
+            piece_index = PAWN;
+            break;
+        case 'n':
+            piece_index = KNIGHT;
+            break;
+        case 'b':
+            piece_index = BISHOP;
+            break;
+        case 'r':
+            piece_index = ROOK;
+            break;
+        case 'q':
+            piece_index = QUEEN;
+            break;
+        case 'k':
+            piece_index = KING;
+            break;
+        default:
+            piece_index = NONE;
     }
 
     if (islower(symbol)) {
@@ -48,9 +74,21 @@ int Piece::get_piece_from_symbol(char symbol) {
     return piece_index;
 }
 
+int Piece::create_piece(int piece_type, int color) {
+    return piece_type | color;
+}
+
 bool Piece::can_pawn_move_two_spaces(int square, int color) {
     int rank = Board::get_rank(square);
     if ((color == WHITE && rank == 1) || (color == BLACK && rank == 6)) {
+        return true;
+    }
+    return false;
+}
+
+bool Piece::can_pawn_promote(int square, int color) {
+    int rank = Board::get_rank(square);
+    if ((color == WHITE && rank == 6) || (color == BLACK && rank == 1)) {
         return true;
     }
     return false;

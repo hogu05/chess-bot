@@ -15,8 +15,8 @@ MoveGenerator::MoveGenerator(const Board board) : board(board) {
 std::vector<int> MoveGenerator::generate_moves() {
     std::vector<int> moves;
     for (int square = 0; square < Board::TOTAL_SQUARES; square++) {
-        if (board.is_occupied(square) && board.get_piece_color(square) == board.to_move) {
-            std::vector<int> piece_moves = generate_piece_moves(board.pieces[square], square, board.to_move);
+        if (board.is_occupied(square) && board.get_piece_color(square) == board.position_info.to_move) {
+            std::vector<int> piece_moves = generate_piece_moves(board.pieces[square], square, board.position_info.to_move);
             moves.insert(moves.end(), piece_moves.begin(), piece_moves.end());
         }
     }
@@ -25,13 +25,18 @@ std::vector<int> MoveGenerator::generate_moves() {
 
 std::vector<int> MoveGenerator::generate_piece_moves(int piece, int square, int color) {
     switch (Piece::get_piece_type(piece)) {
-        case Piece::PAWN: return generate_pawn_moves(square, color);
-        case Piece::KNIGHT: return generate_knight_moves(square, color);
+        case Piece::PAWN:
+            return generate_pawn_moves(square, color);
+        case Piece::KNIGHT:
+            return generate_knight_moves(square, color);
         case Piece::BISHOP:
         case Piece::ROOK:
-        case Piece::QUEEN: return generate_sliding_piece_moves(square, Piece::get_piece_type(piece), color);
-        case Piece::KING: return generate_king_moves(square, color);
-        default: return {};
+        case Piece::QUEEN:
+        return generate_sliding_piece_moves(square, Piece::get_piece_type(piece), color);
+        case Piece::KING:
+            return generate_king_moves(square, color);
+        default:
+            return {};
     }
 }
 
@@ -40,9 +45,9 @@ std::vector<int> MoveGenerator::generate_pawn_moves(int square, int color) {
     int direction = Directions::pawn_directions[color];
 
     if (board.is_empty(square + direction)) {
-        moves.push_back(Move::get_move(square, square + direction));
+        moves.push_back(Move::create_move(square, square + direction, Move::NO_FLAG));
         if (Piece::can_pawn_move_two_spaces(square, color) && board.is_empty(square + direction * 2)) {
-            moves.push_back(Move::get_move(square, square + direction * 2));
+            moves.push_back(Move::create_move(square, square + direction * 2, Move::TWO_SPACE_PAWN_MOVE_FLAG));
         }
     }
 
@@ -50,16 +55,29 @@ std::vector<int> MoveGenerator::generate_pawn_moves(int square, int color) {
     while (pawn_attacks_bitboard != 0) {
         int target_square = Bitboard::pop_square(pawn_attacks_bitboard);
         if (board.is_occupied(target_square) && board.get_piece_color(target_square) != color) {
-            moves.push_back(Move::get_move(target_square, target_square));
+            moves.push_back(Move::create_move(target_square, target_square, Move::NO_FLAG));
         }
 
-        if (target_square == board.en_passant) {
-            moves.push_back(Move::get_move(target_square, target_square));
+        if (target_square == board.position_info.en_passant) {
+            moves.push_back(Move::create_move(target_square, target_square, Move::EN_PASSANT_FLAG));
         }
-
     }
 
+    if (Piece::can_pawn_promote(square, color)) {
+        moves = generate_pawn_promotion_moves(moves);
+    }
     return moves;
+}
+
+std::vector<int> MoveGenerator::generate_pawn_promotion_moves(std::vector<int> moves) {
+    std::vector<int> promotion_moves;
+    for (int move: moves) {
+        promotion_moves.push_back(Move::create_move(move, Move::PROMOTE_TO_KNIGHT_FLAG));
+        promotion_moves.push_back(Move::create_move(move, Move::PROMOTE_TO_BISHOP_FLAG));
+        promotion_moves.push_back(Move::create_move(move, Move::PROMOTE_TO_ROOK_FLAG));
+        promotion_moves.push_back(Move::create_move(move, Move::PROMOTE_TO_QUEEN_FLAG));
+    }
+    return promotion_moves;
 }
 
 std::vector<int> MoveGenerator::generate_knight_moves(int square, int color) {
@@ -69,7 +87,7 @@ std::vector<int> MoveGenerator::generate_knight_moves(int square, int color) {
     while (knight_moves_bitboard != 0) {
         int target_square = Bitboard::pop_square(knight_moves_bitboard);
         if (board.is_empty(target_square) || board.get_piece_color(target_square) != color) {
-            moves.push_back(Move::get_move(square, target_square));
+            moves.push_back(Move::create_move(square, target_square, Move::NO_FLAG));
         }
     }
 
@@ -90,11 +108,11 @@ std::vector<int> MoveGenerator::generate_sliding_piece_moves(int square, int pie
             int target_square = square + direction * i;
             if (board.is_occupied(target_square)) {
                 if (board.get_piece_color(target_square) != color) {
-                    moves.push_back(Move::get_move(square, target_square));
+                    moves.push_back(Move::create_move(square, target_square, Move::NO_FLAG));
                 }
                 break;
             }
-            moves.push_back(Move::get_move(square, target_square));
+            moves.push_back(Move::create_move(square, target_square, Move::NO_FLAG));
         }
     }
     return moves;
@@ -107,16 +125,16 @@ std::vector<int> MoveGenerator::generate_king_moves(int square, int color) {
     while (king_moves_bitboard != 0) {
         int target_square = Bitboard::pop_square(king_moves_bitboard);
         if (board.is_empty(target_square) || board.get_piece_color(target_square) != color) {
-            moves.push_back(Move::get_move(square, target_square));
+            moves.push_back(Move::create_move(square, target_square, Move::NO_FLAG));
         }
     }
 
-    if (board.short_castle[color] && board.is_empty(square + 1) && board.is_empty(square + 2)) {
-        moves.push_back(Move::get_move(square, square + 2));
+    if (board.position_info.can_short_castle[color] && board.is_empty(square + 1) && board.is_empty(square + 2)) {
+        moves.push_back(Move::create_move(square, square + 2, Move::CASTLE_FLAG));
     }
 
-    if (board.long_castle[color] && board.is_empty(square - 1) && board.is_empty(square - 2) && board.is_empty(square - 3)) {
-        moves.push_back(Move::get_move(square, square - 3));
+    if (board.position_info.can_long_castle[color] && board.is_empty(square - 1) && board.is_empty(square - 2) && board.is_empty(square - 3)) {
+        moves.push_back(Move::create_move(square, square - 2, Move::CASTLE_FLAG));
     }
 
     return moves;

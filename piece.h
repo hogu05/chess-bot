@@ -1,6 +1,8 @@
 #ifndef PIECE_H
 #define PIECE_H
 
+#include <array>
+
 class Piece {
 public:
     static const int NONE = 0b0000;
@@ -35,7 +37,10 @@ public:
     static char get_piece_symbol(int piece_index);
     static int get_piece_from_symbol(char symbol);
 
+    static int create_piece(int piece_type, int color);
+
     static bool can_pawn_move_two_spaces(int square, int color);
+    static bool can_pawn_promote(int square, int color);
 };
 
 

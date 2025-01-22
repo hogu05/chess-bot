@@ -1,27 +1,30 @@
 #include <iostream>
 #include "board.h"
-#include "piece.h"
 #include "move_generator.h"
 #include <vector>
 #include "precomputations.h"
-#include "bitboard.h"
+#include "move.h"
 
 int main() {
     auto board = Board();
     Precomputations::init();
-    board.load_position_from_fen("rnbqkbnr/pppppppp/8/8/8/P7/1PPPPPPP/RNBQKBNR");
-    board.to_move = Piece::WHITE;
+    board.load_position_from_fen("rn1qkbnr/ppPppppp/8/8/8/p3BN2/PPPPPPPP/RNBQK2R w KQkq - 0 1");
     auto move_generator = MoveGenerator(board);
     std::vector<int> moves = move_generator.generate_moves();
 
     std::cout << "Moves count: " << moves.size() << std::endl;
-    std::cout << "Moves: ";
+    /*std::cout << "Moves: ";
     for (int move: moves) {
-        std::cout << move << " ";
+        std::cout << Move::get_start_square(move) << " -> " << Move::get_target_square(move) << ", " << Move::get_flag(move) << std::endl;
     }
     std::cout << std::endl;
+    std::cout << std::endl;*/
 
-
+    int move = Move::create_move(50, 58, Move::PROMOTE_TO_BISHOP_FLAG);
+    board.print_board();
+    board.make_move(move);
+    board.print_board();
+    board.unmake_move(move);
     board.print_board();
 }
 

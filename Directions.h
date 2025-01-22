@@ -59,7 +59,7 @@ public:
     };
 
 
-    static int get_direction_index(int direction); // TODO: idk
+    static int get_direction_index(int direction);
 };
 
 

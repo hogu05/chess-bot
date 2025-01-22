@@ -17,6 +17,8 @@ private:
     std::vector<int> generate_knight_moves(int square, int color);
     std::vector<int> generate_sliding_piece_moves(int square, int piece, int color);
     std::vector<int> generate_king_moves(int square, int color);
+
+    std::vector<int> generate_pawn_promotion_moves(std::vector<int> moves);
 };
 
 
