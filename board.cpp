@@ -144,6 +144,10 @@ int Board::get_piece_color(int square) {
     return Piece::get_piece_color(pieces[square]);
 }
 
+int Board::get_piece_type(int square) {
+    return Piece::get_piece_type(pieces[square]);
+}
+
 
 void Board::move_piece(int start_square, int target_square) {
     pieces[target_square] = pieces[start_square];
@@ -158,7 +162,7 @@ void Board::make_move(int move) {
     int target_square = Move::get_target_square(move);
     int move_flag = Move::get_flag(move);
     int moving_color = position_info.to_move;
-    int next_move_color = moving_color == Piece::WHITE? Piece::BLACK : Piece::WHITE;
+    int next_move_color = Piece::get_other_color(moving_color);
 
     new_position_info.to_move = next_move_color;
 
@@ -239,6 +243,7 @@ void Board::unmake_move(int move) {
 
     bool is_capture = position_info.captured_piece != Piece::NONE;
     if (is_capture) {
+        // TODO: Add en passant
         pieces[target_square] = position_info.captured_piece;
     }
 

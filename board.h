@@ -52,6 +52,7 @@ public:
     bool is_occupied(int square);
     bool is_empty(int square);
     int get_piece_color(int square);
+    int get_piece_type(int square);
 
     void move_piece(int start_square, int target_square);
     void make_move(int move);

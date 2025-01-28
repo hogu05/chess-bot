@@ -1,10 +1,15 @@
 #include "move.h"
-#include "piece.h"
 
-int Move::create_move(int from_square, int to_square, int flag) {
+#include <iostream>
+#include <ostream>
+
+#include "piece.h"
+#include "bitboard.h"
+
+int Move::create_move(int start_square, int target_square, int flag) {
     int move = 0;
-    move = move | from_square;
-    move = move | (to_square << 6);
+    move = move | start_square;
+    move = move | (target_square << 6);
     move = move | (flag << 12);
     return move;
 }
@@ -13,6 +18,15 @@ int Move::create_move(int move, int flag) {
     move &= ~FLAG_MASK;
     move |= (flag << 12);
     return move;
+}
+
+std::vector<int> Move::create_moves_from_bitboard(int start_square, uint64_t bitboard) {
+    std::vector<int> moves;
+    while (bitboard != 0) {
+        int target_square = Bitboard::pop_square(bitboard);
+        moves.push_back(create_move(start_square, target_square, NO_FLAG));
+    }
+    return moves;
 }
 
 int Move::get_start_square(int move) {

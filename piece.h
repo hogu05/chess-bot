@@ -37,10 +37,15 @@ public:
     static char get_piece_symbol(int piece_index);
     static int get_piece_from_symbol(char symbol);
 
+    static int get_other_color(int color);
+
     static int create_piece(int piece_type, int color);
 
     static bool can_pawn_move_two_spaces(int square, int color);
     static bool can_pawn_promote(int square, int color);
+
+    static bool can_move_in_direction(int piece, int direction);
+    static bool is_sliding_piece(int piece);
 };
 
 

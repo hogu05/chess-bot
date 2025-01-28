@@ -58,8 +58,11 @@ public:
         SOUTH
     };
 
-
     static int get_direction_index(int direction);
+    static bool is_diagonal_direction(int direction);
+    static bool is_orthogonal_direction(int direction);
+
+    static int get_ray_direction(int start_square, int end_square);
 };
 
 

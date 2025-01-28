@@ -1,7 +1,8 @@
 #ifndef MOVE_H
 #define MOVE_H
 
-
+#include <cstdint>
+#include <vector>
 
 class Move {
 public:
@@ -19,8 +20,9 @@ public:
     static const int PROMOTE_TO_ROOK_FLAG = 0b110;
     static const int PROMOTE_TO_QUEEN_FLAG = 0b111;
 
-    static int create_move(int from_square, int to_square, int flag);
+    static int create_move(int start_square, int target_square, int flag);
     static int create_move(int move, int flag);
+    static std::vector<int> create_moves_from_bitboard(int start_square, uint64_t bitboard);
     static int get_start_square(int move);
     static int get_target_square(int move);
     static int get_flag(int move);
