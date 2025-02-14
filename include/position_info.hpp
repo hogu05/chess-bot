@@ -4,6 +4,7 @@
 #include <array>
 #include "piece.hpp"
 
+// TODO: change to namespace and one simple int
 class PositionInfo {
 public:
     int to_move = Piece::WHITE;

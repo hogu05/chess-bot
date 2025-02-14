@@ -4,7 +4,6 @@
 #include <array>
 #include <cstdint>
 #include "board.hpp"
-#include "directions.hpp"
 
 class Precomputations {
 public:

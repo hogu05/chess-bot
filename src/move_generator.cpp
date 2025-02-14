@@ -7,6 +7,7 @@
 #include "piece.hpp"
 #include "precomputations.hpp"
 #include "move.hpp"
+#include "directions.hpp"
 
 MoveGenerator::MoveGenerator(Board* board) : board(board){}
 

@@ -2,7 +2,6 @@
 #define DIRECTIONS_H
 
 #include <array>
-#include <unordered_map>
 
 namespace Directions {
     const int NORTH = +8;
