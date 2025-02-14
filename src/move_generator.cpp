@@ -8,7 +8,58 @@
 #include "precomputations.h"
 #include "move.h"
 
-MoveGenerator::MoveGenerator(const Board board) : board(board){}
+MoveGenerator::MoveGenerator(Board* board) : board(board){}
+
+std::vector<int> MoveGenerator::generate_moves() {
+    generate_bitboards();
+    std::vector<int> moves;
+    if (!is_double_check) {
+        uint64_t moving_pieces_bitboard = friendly_pieces_bitboard;
+        while (moving_pieces_bitboard != 0) {
+            int square = Bitboard::pop_square(moving_pieces_bitboard);
+            Bitboard::set_all(pinned_piece_possible_squares_bitboard);
+            if (Bitboard::is_set(pinned_pieces_bitboard, square)) {
+                Bitboard::clear_all(pinned_piece_possible_squares_bitboard);
+                generate_pinned_piece_possible_squares_bitboard(square);
+            }
+            std::vector<int> piece_moves = generate_piece_moves(square);
+            moves.insert(moves.end(), piece_moves.begin(), piece_moves.end());
+        }
+    } else {
+        moves = generate_piece_moves(Bitboard::get_square(friendly_king_bitboard));
+    }
+    return moves;
+}
+
+int MoveGenerator::calculate_nodes(int depth) {
+    if (depth == 0) {
+        return 1;
+    }
+    int nodes = 0;
+    for (int move: generate_moves()) {
+        board->make_move(move);
+        int move_nodes = calculate_nodes(depth - 1);
+        nodes += move_nodes;
+        board->unmake_move(move);
+    }
+    return nodes;
+}
+int MoveGenerator::calculate_nodes(int depth, bool debug) {
+    if (depth == 0) {
+        return 1;
+    }
+    int nodes = 0;
+    for (int move: generate_moves()) {
+        board->make_move(move);
+        int move_nodes = calculate_nodes(depth - 1);
+        if (debug) {
+            std::cout << Move::get_move_notation(move) << ": "  << move_nodes << std::endl;
+        }
+        nodes += move_nodes;
+        board->unmake_move(move);
+    }
+    return nodes;
+}
 
 void MoveGenerator::generate_bitboards() {
     Bitboard::clear_all(friendly_pieces_bitboard);
@@ -16,11 +67,11 @@ void MoveGenerator::generate_bitboards() {
     Bitboard::clear_all(all_pieces_bitboard);
     Bitboard::clear_all(friendly_king_bitboard);
     for (int square = 0; square < Board::TOTAL_SQUARES; square++) {
-        if (board.is_occupied(square)) {
+        if (board->is_occupied(square)) {
             Bitboard::set_square(all_pieces_bitboard, square);
-            if (board.get_piece_color(square) == board.position_info.to_move) {
+            if (board->get_piece_color(square) == board->position_info.to_move) {
                 Bitboard::set_square(friendly_pieces_bitboard, square);
-                if (board.get_piece_type(square) == Piece::KING) {
+                if (board->get_piece_type(square) == Piece::KING) {
                     Bitboard::set_square(friendly_king_bitboard, square);
                 }
             } else {
@@ -39,36 +90,15 @@ void MoveGenerator::generate_bitboards() {
     if (!is_double_check) {
         generate_pinned_pieces_bitboard();
         if (checking_piece_bitboard != 0) {
+            Bitboard::clear_all(blocking_squares_bitboard);
             generate_blocking_squares_bitboard();
         }
     }
 }
 
-
-std::vector<int> MoveGenerator::generate_moves() {
-    generate_bitboards();
-    std::vector<int> moves;
-    if (!is_double_check) {
-        uint64_t moving_pieces_bitboard = friendly_pieces_bitboard;
-        while (moving_pieces_bitboard != 0) {
-            int square = Bitboard::pop_square(moving_pieces_bitboard);
-            Bitboard::set_all(pinned_piece_possible_squares_bitboard);
-            if (Bitboard::is_set(pinned_pieces_bitboard, square)) {
-                Bitboard::clear_all(pinned_piece_possible_squares_bitboard);
-                generate_pinned_piece_possible_squares_bitboard(square);
-            }
-            std::vector<int> piece_moves = generate_piece_moves(square);
-            moves.insert(moves.end(), piece_moves.begin(), piece_moves.end());
-        }
-    } else {
-        moves = generate_piece_moves(Bitboard::get_square(friendly_pieces_bitboard));
-    }
-    return moves;
-}
-
 std::vector<int> MoveGenerator::generate_piece_moves(int square) {
-    int piece_type = board.get_piece_type(square);
-    int color = board.get_piece_color(square);
+    int piece_type = board->get_piece_type(square);
+    int color = board->get_piece_color(square);
     switch (piece_type) {
         case Piece::PAWN:
             return generate_pawn_moves(square, color);
@@ -106,9 +136,10 @@ std::vector<int> MoveGenerator::generate_pawn_moves(int square, int color) {
     std::vector<int> legal_moves = Move::create_moves_from_bitboard(square, legal_moves_bitboard);
     moves.insert(moves.end(), legal_moves.begin(), legal_moves.end());
 
-    if (Bitboard::is_set(Precomputations::pawn_attacks[color][square], board.position_info.en_passant)) {
-        // TODO: En passant
-        moves.push_back(Move::create_move(square, board.position_info.en_passant, Move::EN_PASSANT_FLAG));
+    if (Bitboard::is_set(Precomputations::pawn_attacks[color][square], board->position_info.en_passant)) {
+        if (is_en_passant_legal(square, board->position_info.en_passant)) {
+            moves.push_back(Move::create_move(square, board->position_info.en_passant, Move::EN_PASSANT_FLAG));
+        }
     }
 
     if (Piece::can_pawn_promote(square, color)) {
@@ -164,22 +195,24 @@ std::vector<int> MoveGenerator::generate_king_moves(int square, int color) {
     uint64_t legal_moves_bitboard = pseudo_legal_moves_bitboard & (~attacked_squares_bitboard);
     std::vector<int> moves = Move::create_moves_from_bitboard(square, legal_moves_bitboard);
 
-    if (board.position_info.can_short_castle[color] &&
-            Bitboard::is_clear(all_pieces_bitboard, square + 1) &&
-            Bitboard::is_clear(all_pieces_bitboard, square + 2)) {
-        if (Bitboard::is_clear(attacked_squares_bitboard, square + 1) &&
-            Bitboard::is_clear(attacked_squares_bitboard, square + 2)) {
-            moves.push_back(Move::create_move(square, square + 2, Move::CASTLE_FLAG));
+    if (checking_piece_bitboard == 0) {
+        if (board->position_info.can_short_castle[color] &&
+                Bitboard::is_clear(all_pieces_bitboard, square + 1) &&
+                Bitboard::is_clear(all_pieces_bitboard, square + 2)) {
+            if (Bitboard::is_clear(attacked_squares_bitboard, square + 1) &&
+                Bitboard::is_clear(attacked_squares_bitboard, square + 2)) {
+                moves.push_back(Move::create_move(square, square + 2, Move::CASTLE_FLAG));
+            }
         }
-    }
 
-    if (board.position_info.can_short_castle[color] &&
-            Bitboard::is_clear(all_pieces_bitboard, square - 1) &&
-            Bitboard::is_clear(all_pieces_bitboard, square - 2) &&
-            Bitboard::is_clear(all_pieces_bitboard, square - 3)) {
-        if (Bitboard::is_clear(attacked_squares_bitboard, square - 1)
-            && Bitboard::is_clear(attacked_squares_bitboard, square - 2)) {
-            moves.push_back(Move::create_move(square, square - 2, Move::CASTLE_FLAG));
+        if (board->position_info.can_long_castle[color] &&
+                Bitboard::is_clear(all_pieces_bitboard, square - 1) &&
+                Bitboard::is_clear(all_pieces_bitboard, square - 2) &&
+                Bitboard::is_clear(all_pieces_bitboard, square - 3)) {
+            if (Bitboard::is_clear(attacked_squares_bitboard, square - 1)
+                && Bitboard::is_clear(attacked_squares_bitboard, square - 2)) {
+                moves.push_back(Move::create_move(square, square - 2, Move::CASTLE_FLAG));
+            }
         }
     }
 
@@ -197,8 +230,8 @@ void MoveGenerator::generate_attacked_squares_bitboard() {
 
 uint64_t MoveGenerator::generate_piece_attacks(int square) {
     uint64_t attacks = 0;
-    int piece_type = board.get_piece_type(square);
-    int color = board.get_piece_color(square);
+    int piece_type = board->get_piece_type(square);
+    int color = board->get_piece_color(square);
     switch (piece_type) {
         case Piece::PAWN:
             attacks = generate_pawn_attacks(square, color);
@@ -247,10 +280,10 @@ uint64_t MoveGenerator::generate_sliding_piece_attacks(int square, int piece) {
         int direction = Directions::sliding_directions[direction_index];
         for (int i = 1; i <= Precomputations::get_squares_to_edge(square, direction); i++) {
             int target_square = square + direction * i;
+            Bitboard::set_square(attacks, target_square);
             if (Bitboard::is_set(all_pieces_bitboard, target_square) && Bitboard::is_clear(friendly_king_bitboard, target_square)) {
                 break;
             }
-            Bitboard::set_square(attacks, target_square);
         }
     }
     return attacks;
@@ -276,7 +309,7 @@ void MoveGenerator::generate_pinned_pieces_bitboard() {
             }
             if (Bitboard::is_set(enemy_pieces_bitboard, target_square)) {
                 if (pinned_piece_square != -1) {
-                    if (Piece::can_move_in_direction(board.get_piece_type(target_square), -1 * direction)) {
+                    if (Piece::can_move_in_direction(board->get_piece_type(target_square), -1 * direction)) {
                         Bitboard::set_square(pinned_pieces_bitboard, pinned_piece_square);
                     }
                 }
@@ -289,7 +322,7 @@ void MoveGenerator::generate_pinned_pieces_bitboard() {
 void MoveGenerator::generate_blocking_squares_bitboard() {
     int king_square = Bitboard::get_square(friendly_king_bitboard);
     int checking_piece_square = Bitboard::get_square(checking_piece_bitboard);
-    if (!Piece::is_sliding_piece(board.get_piece_type(checking_piece_square))) {
+    if (!Piece::is_sliding_piece(board->get_piece_type(checking_piece_square))) {
         return;
     }
     Bitboard::clear_all(blocking_squares_bitboard);
@@ -309,10 +342,42 @@ void MoveGenerator::generate_pinned_piece_possible_squares_bitboard(int square) 
         Bitboard::set_square(pinned_piece_possible_squares_bitboard, target_square);
         target_square += direction;
     }
+    Bitboard::set_square(pinned_piece_possible_squares_bitboard, target_square);
 }
 
 uint64_t MoveGenerator::get_legal_moves(uint64_t moves) {
     return moves & (blocking_squares_bitboard | checking_piece_bitboard) & pinned_piece_possible_squares_bitboard;
+}
+
+bool MoveGenerator::is_en_passant_legal(int start_square, int target_square) {
+    int capture_square = Board::get_en_passant_capture_square(start_square, target_square);
+    int king_square = Bitboard::get_square(friendly_king_bitboard);
+    int direction = Directions::get_ray_direction(king_square, start_square);
+
+    if (direction == Directions::WEST || direction == Directions::EAST) {
+        uint64_t en_passant_pieces_bitboard = all_pieces_bitboard;
+        Bitboard::clear_square(en_passant_pieces_bitboard, start_square);
+        Bitboard::clear_square(en_passant_pieces_bitboard, capture_square);
+
+        for (int i = 1; i <= Precomputations::get_squares_to_edge(king_square, direction); i++) {
+            int scan_square = king_square + direction * i;
+            if (Bitboard::is_set(en_passant_pieces_bitboard, scan_square)) {
+                if (Bitboard::is_set(enemy_pieces_bitboard, scan_square)) {
+                    int piece_type = board->get_piece_type(scan_square);
+                    if (piece_type == Piece::QUEEN || piece_type == Piece::ROOK) {
+                        return false;
+                    }
+                }
+                break;
+            }
+        }
+    }
+    if (Bitboard::is_set(pinned_piece_possible_squares_bitboard, target_square)) {
+        if (checking_piece_bitboard == 0 || Bitboard::is_set(checking_piece_bitboard, capture_square)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 

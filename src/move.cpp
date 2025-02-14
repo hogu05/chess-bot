@@ -5,6 +5,7 @@
 
 #include "piece.h"
 #include "bitboard.h"
+#include "board.h"
 
 int Move::create_move(int start_square, int target_square, int flag) {
     int move = 0;
@@ -58,4 +59,11 @@ int Move::get_pawn_promotion_piece_type(int move) {
         default:
             return Piece::QUEEN;
     }
+}
+
+std::string Move::get_move_notation(int move) {
+    std::string notation;
+    notation += Board::get_square_notation(get_start_square(move));
+    notation += Board::get_square_notation(get_target_square(move));
+    return notation;
 }

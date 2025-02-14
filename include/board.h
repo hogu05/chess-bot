@@ -27,7 +27,10 @@ public:
     static int get_square(int file, int rank);
     static bool is_valid_square(int square);
     static int get_file_from_notation(char notation);
+    static char get_file_notation(int file);
     static int get_square_from_notation(std::string notation);
+    static std::string get_square_notation(int square);
+    static int get_en_passant_capture_square(int start_square, int target_square);
 
     static constexpr std::array<int, 2> KING_START_SQUARE = {
         e1,

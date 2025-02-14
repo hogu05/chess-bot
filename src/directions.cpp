@@ -59,12 +59,16 @@ int Directions::get_ray_direction(int start_square, int end_square) {
         return WEST;
     }
 
-    if (file_diff > 0) {
-        return SOUTH_EAST;
+    if (rank_diff < 0) {
+        if (file_diff > 0) {
+            return SOUTH_EAST;
+        }
+        if (file_diff < 0) {
+            return SOUTH_WEST;
+        }
+        return SOUTH;
     }
-    if (file_diff < 0) {
-        return SOUTH_WEST;
-    }
-    return SOUTH;
+
+    return -1;
 }
 

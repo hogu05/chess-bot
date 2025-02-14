@@ -23,31 +23,31 @@ bool Board::is_valid_square(int square) {
 }
 
 int Board::get_file_from_notation(char notation) {
-    switch (notation) {
-        case 'a':
-            return 0;
-        case 'b':
-            return 1;
-        case 'c':
-            return 2;
-        case 'd':
-            return 3;
-        case 'e':
-            return 4;
-        case 'f':
-            return 5;
-        case 'g':
-            return 6;
-        case 'h':
-            return 7;
-        default:
-            return 0;
-    }
+    return notation - 'a';
+}
+
+char Board::get_file_notation(int file) {
+    return 'a' + file;
 }
 
 int Board::get_square_from_notation(std::string notation) {
     int file = get_file_from_notation(notation[0]);
     int rank = notation[1] - '0' - 1;
+    return get_square(file, rank);
+}
+
+std::string Board::get_square_notation(int square) {
+    std::string notation;
+    char file = get_file_notation(get_file(square));
+    char rank = get_rank(square) + 1 + '0';
+    notation += file;
+    notation += rank;
+    return notation;
+}
+
+int Board::get_en_passant_capture_square(int start_square, int target_square) {
+    int file = get_file(target_square);
+    int rank = get_rank(start_square);
     return get_square(file, rank);
 }
 
@@ -171,6 +171,12 @@ void Board::make_move(int move) {
         new_position_info.captured_piece = pieces[target_square];
     }
 
+    if (move_flag == Move::EN_PASSANT_FLAG) {
+        int en_passant_capture_square = get_en_passant_capture_square(start_square, target_square);
+        new_position_info.captured_piece = pieces[en_passant_capture_square];
+        pieces[en_passant_capture_square] = Piece::NONE;
+    }
+
     if (move_flag == Move::TWO_SPACE_PAWN_MOVE_FLAG) {
         new_position_info.en_passant = (start_square + target_square) / 2;
     }
@@ -243,8 +249,11 @@ void Board::unmake_move(int move) {
 
     bool is_capture = position_info.captured_piece != Piece::NONE;
     if (is_capture) {
-        // TODO: Add en passant
-        pieces[target_square] = position_info.captured_piece;
+        if (move_flag == Move::EN_PASSANT_FLAG) {
+            pieces[get_en_passant_capture_square(start_square, target_square)] = position_info.captured_piece;
+        } else {
+            pieces[target_square] = position_info.captured_piece;
+        }
     }
 
 

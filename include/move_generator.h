@@ -3,16 +3,16 @@
 
 #include <cstdint>
 #include <vector>
-#include <array>
 #include "board.h"
-#include "piece.h"
 
 class MoveGenerator {
 public:
-    MoveGenerator(Board board);
+    MoveGenerator(Board* board);
     std::vector<int> generate_moves();
+    int calculate_nodes(int depth);
+    int calculate_nodes(int depth, bool debug);
 private:
-    Board board;
+    Board* board;
 
     uint64_t friendly_pieces_bitboard;
     uint64_t enemy_pieces_bitboard;
@@ -47,6 +47,8 @@ private:
     void generate_pinned_piece_possible_squares_bitboard(int square);
 
     uint64_t get_legal_moves(uint64_t moves);
+
+    bool is_en_passant_legal(int start_square, int target_square);
 };
 
 
