@@ -2,7 +2,7 @@
 #define POSITION_INFO_H
 
 #include <array>
-#include "piece.h"
+#include "piece.hpp"
 
 class PositionInfo {
 public:

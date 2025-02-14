@@ -1,11 +1,11 @@
-#include "move.h"
+#include "move.hpp"
 
 #include <iostream>
 #include <ostream>
 
-#include "piece.h"
-#include "bitboard.h"
-#include "board.h"
+#include "piece.hpp"
+#include "bitboard.hpp"
+#include "board.hpp"
 
 int Move::create_move(int start_square, int target_square, int flag) {
     int move = 0;

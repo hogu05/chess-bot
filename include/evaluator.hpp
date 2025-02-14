@@ -1,7 +1,7 @@
 #ifndef EVALUATOR_H
 #define EVALUATOR_H
 
-#include "board.h"
+#include "board.hpp"
 
 
 class Evaluator {

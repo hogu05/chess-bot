@@ -1,9 +1,9 @@
-#include "piece.h"
+#include "piece.hpp"
 #include <cctype>
 #include <iostream>
 
-#include "board.h"
-#include "directions.h"
+#include "board.hpp"
+#include "directions.hpp"
 
 int Piece::get_piece_type(int piece_index) {
     return piece_index & PIECE_TYPE_MASK;

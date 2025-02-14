@@ -1,12 +1,12 @@
-#include "move_generator.h"
+#include "move_generator.hpp"
 
 #include <iostream>
 #include <ostream>
 
-#include "bitboard.h"
-#include "piece.h"
-#include "precomputations.h"
-#include "move.h"
+#include "bitboard.hpp"
+#include "piece.hpp"
+#include "precomputations.hpp"
+#include "move.hpp"
 
 MoveGenerator::MoveGenerator(Board* board) : board(board){}
 

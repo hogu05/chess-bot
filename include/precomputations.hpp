@@ -3,8 +3,8 @@
 
 #include <array>
 #include <cstdint>
-#include "board.h"
-#include "directions.h"
+#include "board.hpp"
+#include "directions.hpp"
 
 class Precomputations {
 public:

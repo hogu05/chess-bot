@@ -1,10 +1,10 @@
 #include <iostream>
-#include "board.h"
+#include "board.hpp"
 
-#include "piece.h"
+#include "piece.hpp"
 #include <string>
 #include <sstream>
-#include "move.h"
+#include "move.hpp"
 
 int Board::get_file(int square) {
     return square % RANKS;

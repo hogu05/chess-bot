@@ -3,7 +3,7 @@
 
 #include <string>
 #include <array>
-#include "position_info.h"
+#include "position_info.hpp"
 #include <stack>
 
 class Board {

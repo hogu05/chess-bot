@@ -1,5 +1,4 @@
-#include "bitboard.h"
-#include <array>
+#include "bitboard.hpp"
 #include <iostream>
 #include <bitset>
 

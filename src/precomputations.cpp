@@ -1,9 +1,9 @@
-#include "precomputations.h"
+#include "precomputations.hpp"
 #include <iostream>
-#include "board.h"
-#include "directions.h"
-#include "bitboard.h"
-#include "piece.h"
+#include "board.hpp"
+#include "directions.hpp"
+#include "bitboard.hpp"
+#include "piece.hpp"
 
 void Precomputations::init() {
     calculate_squares_to_edge();

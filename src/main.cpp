@@ -1,7 +1,7 @@
 #include <iostream>
-#include "board.h"
-#include "move_generator.h"
-#include "precomputations.h"
+#include "board.hpp"
+#include "move_generator.hpp"
+#include "precomputations.hpp"
 #include <chrono>
 
 int main() {

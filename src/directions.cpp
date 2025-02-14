@@ -1,5 +1,5 @@
-#include "directions.h"
-#include "board.h"
+#include "directions.hpp"
+#include "board.hpp"
 
 int Directions::get_direction_index(int direction) {
     switch (direction) {
