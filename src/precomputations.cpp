@@ -16,7 +16,7 @@ std::array<std::array<int, 8>, Board::TOTAL_SQUARES> Precomputations::squares_to
 void Precomputations::calculate_squares_to_edge() {
     for (int rank = 0; rank < Board::RANKS; rank++) {
         for (int file = 0; file < Board::FILES; file++) {
-            int square = rank * Board::FILES + file;
+            int square = Board::get_square(file, rank);
 
             squares_to_edge[square][Directions::get_direction_index(Directions::NORTH)] = Board::RANKS - rank - 1;
             squares_to_edge[square][Directions::get_direction_index(Directions::EAST)] = Board::FILES - file - 1;

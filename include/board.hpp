@@ -30,6 +30,7 @@ public:
     static char get_file_notation(int file);
     static int get_square_from_notation(std::string notation);
     static std::string get_square_notation(int square);
+    static int get_en_passant_square(int en_passant_file, int to_move);
     static int get_en_passant_capture_square(int start_square, int target_square);
 
     static constexpr std::array<int, 2> KING_START_SQUARE = {
@@ -46,8 +47,8 @@ public:
     };
 
     std::array<int, 64> pieces;
-    PositionInfo position_info;
-    std::stack<PositionInfo> previous_positions;
+    int position_info = 0;
+    std::stack<int> previous_positions;
 
     void load_position_from_fen(std::string fen);
     void print_board();
@@ -60,7 +61,6 @@ public:
     void move_piece(int start_square, int target_square);
     void make_move(int move);
     void unmake_move(int move);
-
 };
 
 #endif

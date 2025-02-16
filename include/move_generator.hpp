@@ -7,12 +7,14 @@
 
 class MoveGenerator {
 public:
-    MoveGenerator(Board* board);
+    MoveGenerator(Board& board);
     std::vector<int> generate_moves();
     int calculate_nodes(int depth);
     int calculate_nodes(int depth, bool debug);
 private:
-    Board* board;
+    Board& board;
+
+    int en_passant_square;
 
     uint64_t friendly_pieces_bitboard;
     uint64_t enemy_pieces_bitboard;

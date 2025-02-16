@@ -7,11 +7,11 @@
 int main() {
     auto board = Board();
     Precomputations::init();
-    board.load_position_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    auto move_generator = MoveGenerator(&board);
+    board.load_position_from_fen("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
+    auto move_generator = MoveGenerator(board);
 
     auto start = std::chrono::high_resolution_clock::now();
-    int nodes = move_generator.calculate_nodes(6, true);
+    int nodes = move_generator.calculate_nodes(5, true);
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
 
