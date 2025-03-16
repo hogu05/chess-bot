@@ -1,19 +1,21 @@
 #ifndef DIRECTIONS_H
 #define DIRECTIONS_H
 
+#include "types.hpp"
+
 #include <array>
 
 namespace Directions {
-    const int NORTH = +8;
-    const int EAST = +1;
-    const int SOUTH = -8;
-    const int WEST = -1;
-    const int NORTH_EAST = NORTH + EAST;
-    const int SOUTH_EAST = SOUTH + EAST;
-    const int SOUTH_WEST = SOUTH + WEST;
-    const int NORTH_WEST = NORTH + WEST;
+    constexpr Direction_t NORTH = +8;
+    constexpr Direction_t EAST = +1;
+    constexpr Direction_t SOUTH = -8;
+    constexpr Direction_t WEST = -1;
+    constexpr Direction_t NORTH_EAST = NORTH + EAST;
+    constexpr Direction_t SOUTH_EAST = SOUTH + EAST;
+    constexpr Direction_t SOUTH_WEST = SOUTH + WEST;
+    constexpr Direction_t NORTH_WEST = NORTH + WEST;
 
-    constexpr std::array<int, 8> sliding_directions = { // TODO: Maybe rename later
+    constexpr std::array<Direction_t, 8> sliding_directions = { // TODO: Maybe rename later
         NORTH,
         EAST,
         SOUTH,
@@ -24,7 +26,7 @@ namespace Directions {
         NORTH_WEST
     };
 
-    constexpr std::array<int, 8> knight_directions = {
+    constexpr std::array<Direction_t, 8> knight_directions = {
         NORTH + NORTH + EAST,
         NORTH + EAST + EAST,
         SOUTH + EAST + EAST,
@@ -35,7 +37,7 @@ namespace Directions {
         NORTH + NORTH + WEST
     };
 
-    constexpr std::array<std::array<int, 2>, 2> pawn_attack_directions = {
+    constexpr std::array<std::array<Direction_t, 2>, 2> pawn_attack_directions = {
         {
             // White
             {
@@ -51,16 +53,16 @@ namespace Directions {
     };
 
 
-    constexpr std::array<int, 2> pawn_directions = {
+    constexpr std::array<Direction_t, 2> pawn_directions = {
         NORTH,
         SOUTH
     };
 
-    int get_direction_index(int direction);
-    bool is_diagonal_direction(int direction);
-    bool is_orthogonal_direction(int direction);
+    int get_direction_index(Direction_t direction);
+    bool is_diagonal_direction(Direction_t direction);
+    bool is_orthogonal_direction(Direction_t direction);
 
-    int get_ray_direction(int start_square, int end_square);
+    Direction_t get_ray_direction(Square_t start_square, Square_t end_square);
 };
 
 

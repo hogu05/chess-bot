@@ -1,21 +1,21 @@
 #include "piece.hpp"
-#include <cctype>
-#include <iostream>
-
 #include "board.hpp"
 #include "directions.hpp"
 
-int Piece::get_piece_type(int piece_index) {
-    return piece_index & PIECE_TYPE_MASK;
+#include <cctype>
+#include <iostream>
+
+PieceType_t Piece::get_piece_type(Piece_t piece) {
+    return piece & PIECE_TYPE_MASK;
 }
 
-int Piece::get_piece_color(int piece_index) {
-    return piece_index & PIECE_COLOR_MASK;
+Color_t Piece::get_piece_color(Piece_t piece) {
+    return piece & PIECE_COLOR_MASK;
 }
 
-char Piece::get_piece_symbol(int piece_index) {
+char Piece::get_piece_symbol(Piece_t piece) {
     char piece_symbol = ' ';
-    switch (get_piece_type(piece_index)) {
+    switch (get_piece_type(piece)) {
         case PAWN:
             piece_symbol = 'p';
             break;
@@ -38,53 +38,53 @@ char Piece::get_piece_symbol(int piece_index) {
             piece_symbol = '.';
     }
 
-    if (get_piece_color(piece_index) == WHITE) {
+    if (get_piece_color(piece) == WHITE) {
         piece_symbol = toupper(piece_symbol);
     }
     return piece_symbol;
 }
 
-int Piece::get_piece_from_symbol(char symbol) {
-    int piece_index = 0;
+Piece_t Piece::get_piece_from_symbol(char symbol) {
+    Piece_t piece = 0;
     switch (tolower(symbol)) {
         case 'p':
-            piece_index = PAWN;
+            piece = PAWN;
             break;
         case 'n':
-            piece_index = KNIGHT;
+            piece = KNIGHT;
             break;
         case 'b':
-            piece_index = BISHOP;
+            piece = BISHOP;
             break;
         case 'r':
-            piece_index = ROOK;
+            piece = ROOK;
             break;
         case 'q':
-            piece_index = QUEEN;
+            piece = QUEEN;
             break;
         case 'k':
-            piece_index = KING;
+            piece = KING;
             break;
         default:
-            piece_index = NONE;
+            piece = NONE;
     }
 
     if (islower(symbol)) {
-        piece_index = piece_index | BLACK;
+        piece = piece | BLACK;
     }
-    return piece_index;
+    return piece;
 }
 
-int Piece::get_other_color(int color) {
+Color_t Piece::get_other_color(Color_t color) {
     return color == WHITE ? BLACK : WHITE;
 }
 
 
-int Piece::create_piece(int piece_type, int color) {
+Piece_t Piece::create_piece(PieceType_t piece_type, Color_t color) {
     return piece_type | color;
 }
 
-bool Piece::can_pawn_move_two_spaces(int square, int color) {
+bool Piece::can_pawn_move_two_spaces(Square_t square, Color_t color) {
     int rank = Board::get_rank(square);
     if ((color == WHITE && rank == 1) || (color == BLACK && rank == 6)) {
         return true;
@@ -92,7 +92,7 @@ bool Piece::can_pawn_move_two_spaces(int square, int color) {
     return false;
 }
 
-bool Piece::can_pawn_promote(int square, int color) {
+bool Piece::can_pawn_promote(Square_t square, Color_t color) {
     int rank = Board::get_rank(square);
     if ((color == WHITE && rank == 6) || (color == BLACK && rank == 1)) {
         return true;
@@ -100,7 +100,7 @@ bool Piece::can_pawn_promote(int square, int color) {
     return false;
 }
 
-bool Piece::can_move_in_direction(int piece_type, int direction) {
+bool Piece::can_move_in_direction(PieceType_t piece_type, Direction_t direction) {
     if ((piece_type == BISHOP || piece_type == QUEEN) && Directions::is_diagonal_direction(direction)) {
         return true;
     }
@@ -110,7 +110,7 @@ bool Piece::can_move_in_direction(int piece_type, int direction) {
     return false;
 }
 
-bool Piece::is_sliding_piece(int piece_type) {
+bool Piece::is_sliding_piece(PieceType_t piece_type) {
     if (piece_type == BISHOP || piece_type == ROOK || piece_type == QUEEN) {
         return true;
     }

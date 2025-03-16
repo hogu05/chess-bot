@@ -1,17 +1,44 @@
 #ifndef BOARD_H
 #define BOARD_H
 
+#include "types.hpp"
+
 #include <string>
 #include <array>
-#include "position_info.hpp"
+#include <move.hpp>
 #include <stack>
 
 class Board {
 public:
-    static const int FILES = 8;
-    static const int RANKS = 8;
-    static const int TOTAL_SQUARES = FILES * RANKS;
-    enum Square {
+    static constexpr int FILES = 8;
+    static constexpr int RANKS = 8;
+    static constexpr int TOTAL_SQUARES = FILES * RANKS;
+
+    static int get_file(Square_t square);
+    static int get_rank(Square_t square);
+    static Square_t get_square(int file, int rank);
+    static bool is_valid_square(Square_t square);
+    static std::string get_square_notation(Square_t square);
+    static Square_t get_en_passant_square(int en_passant_file, Color_t to_move);
+    static Square_t get_en_passant_capture_square(Square_t start_square, Square_t target_square);
+
+    std::array<Piece_t, 64> pieces{};
+    PositionInfo_t position_info{};
+    std::stack<PositionInfo_t> previous_positions;
+
+    void load_position_from_fen(std::string fen);
+    void print_board();
+
+    bool is_occupied(Square_t square);
+    bool is_empty(Square_t square);
+    Color_t get_piece_color(Square_t square);
+    PieceType_t get_piece_type(Square_t square);
+
+    void make_move(Move_t move);
+    void unmake_move(Move_t move);
+
+private:
+    enum Square: Square_t {
         a1, b1, c1, d1, e1, f1, g1, h1,
         a2, b2, c2, d2, e2, f2, g2, h2,
         a3, b3, c3, d3, e3, f3, g3, h3,
@@ -22,45 +49,24 @@ public:
         a8, b8, c8, d8, e8, f8, g8, h8
     };
 
-    static int get_file(int square);
-    static int get_rank(int square);
-    static int get_square(int file, int rank);
-    static bool is_valid_square(int square);
-    static int get_file_from_notation(char notation);
-    static char get_file_notation(int file);
-    static int get_square_from_notation(std::string notation);
-    static std::string get_square_notation(int square);
-    static int get_en_passant_square(int en_passant_file, int to_move);
-    static int get_en_passant_capture_square(int start_square, int target_square);
-
-    static constexpr std::array<int, 2> KING_START_SQUARE = {
+    static constexpr std::array<Square_t, 2> KING_START_SQUARE = {
         e1,
         e8,
     };
-    static constexpr std::array<int, 2> QUEENSIDE_ROOK_START_SQUARE = {
+    static constexpr std::array<Square_t, 2> QUEENSIDE_ROOK_START_SQUARE = {
         a1,
         a8
     };
-    static constexpr std::array<int, 2> KINGSIDE_ROOK_START_SQUARE = {
+    static constexpr std::array<Square_t, 2> KINGSIDE_ROOK_START_SQUARE = {
         h1,
         h8
     };
 
-    std::array<int, 64> pieces;
-    int position_info = 0;
-    std::stack<int> previous_positions;
+    static int get_file_from_notation(char notation);
+    static char get_file_notation(int file);
+    static Square_t get_square_from_notation(std::string notation);
 
-    void load_position_from_fen(std::string fen);
-    void print_board();
-
-    bool is_occupied(int square);
-    bool is_empty(int square);
-    int get_piece_color(int square);
-    int get_piece_type(int square);
-
-    void move_piece(int start_square, int target_square);
-    void make_move(int move);
-    void unmake_move(int move);
+    void move_piece(Square_t start_square, Square_t target_square);
 };
 
 #endif

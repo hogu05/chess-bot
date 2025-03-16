@@ -1,10 +1,12 @@
-#include <iostream>
 #include "board.hpp"
-
 #include "piece.hpp"
+#include "move.hpp"
+#include "position_info.hpp"
+
+#include <iostream>
 #include <string>
 #include <sstream>
-#include "move.hpp"
+
 
 int Board::get_file(int square) {
     return square & 0b111;
@@ -14,11 +16,11 @@ int Board::get_rank(int square) {
     return square >> 3;
 }
 
-int Board::get_square(int file, int rank) {
+Square_t Board::get_square(int file, int rank) {
     return (rank << 3) | file;
 }
 
-bool Board::is_valid_square(int square) {
+bool Board::is_valid_square(Square_t square) {
     return square >= 0 && square < TOTAL_SQUARES;
 }
 
@@ -30,7 +32,7 @@ char Board::get_file_notation(int file) {
     return 'a' + file;
 }
 
-int Board::get_square_from_notation(std::string notation) {
+Square_t Board::get_square_from_notation(std::string notation) {
     int file = get_file_from_notation(notation[0]);
     int rank = notation[1] - '0' - 1;
     return get_square(file, rank);
@@ -45,7 +47,7 @@ std::string Board::get_square_notation(int square) {
     return notation;
 }
 
-int Board::get_en_passant_square(int en_passant_file, int to_move) {
+Square_t Board::get_en_passant_square(int en_passant_file, Color_t to_move) {
     if (en_passant_file == -1) {
         return -1;
     }
@@ -53,7 +55,7 @@ int Board::get_en_passant_square(int en_passant_file, int to_move) {
     return get_square(en_passant_file, rank);
 }
 
-int Board::get_en_passant_capture_square(int start_square, int target_square) {
+Square_t Board::get_en_passant_capture_square(int start_square, Color_t target_square) {
     int file = get_file(target_square);
     int rank = get_rank(start_square);
     return get_square(file, rank);
@@ -68,7 +70,7 @@ void Board::load_position_from_fen(std::string fen) {
     position_info = 0;
 
     // Getting pieces
-    int square = 56;
+    Square_t square = 56;
     for (char current_char: fen_info[0]) {
         if (current_char == '/') {
             square -= 16;
@@ -134,7 +136,7 @@ void Board::load_position_from_fen(std::string fen) {
 }
 
 void Board::print_board() {
-    int square = 56;
+    Square_t square = 56;
     while (square >= 0) {
         std::cout << Piece::get_piece_symbol(pieces[square]) << " ";
         square++;
@@ -146,36 +148,36 @@ void Board::print_board() {
     std::cout << std::endl;
 }
 
-bool Board::is_occupied(int square) {
+bool Board::is_occupied(Square_t square) {
     return Piece::get_piece_type(pieces[square]) != Piece::NONE;
 }
 
-bool Board::is_empty(int square) {
+bool Board::is_empty(Square_t square) {
     return Piece::get_piece_type(pieces[square]) == Piece::NONE;
 }
 
-int Board::get_piece_color(int square) {
+Color_t Board::get_piece_color(Square_t square) {
     return Piece::get_piece_color(pieces[square]);
 }
 
-int Board::get_piece_type(int square) {
+PieceType_t Board::get_piece_type(Square_t square) {
     return Piece::get_piece_type(pieces[square]);
 }
 
 
-void Board::move_piece(int start_square, int target_square) {
+void Board::move_piece(Square_t start_square, Square_t target_square) {
     pieces[target_square] = pieces[start_square];
     pieces[start_square] = Piece::NONE;
 }
 
-void Board::make_move(int move) {
-    int new_position_info = 0;
+void Board::make_move(Move_t move) {
+    PositionInfo_t new_position_info = 0;
     PositionInfo::set_castling_rights(new_position_info, PositionInfo::get_castling_rights(position_info));
-    int start_square = Move::get_start_square(move);
-    int target_square = Move::get_target_square(move);
+    Square_t start_square = Move::get_start_square(move);
+    Square_t target_square = Move::get_target_square(move);
     int move_flag = Move::get_flag(move);
-    int moving_color = PositionInfo::get_to_move(position_info);
-    int next_move_color = Piece::get_other_color(moving_color);
+    Color_t moving_color = PositionInfo::get_to_move(position_info);
+    Color_t next_move_color = Piece::get_other_color(moving_color);
 
     PositionInfo::set_to_move(new_position_info, next_move_color);
 
@@ -185,7 +187,7 @@ void Board::make_move(int move) {
     }
 
     if (move_flag == Move::EN_PASSANT_FLAG) {
-        int en_passant_capture_square = get_en_passant_capture_square(start_square, target_square);
+        Square_t en_passant_capture_square = get_en_passant_capture_square(start_square, target_square);
         PositionInfo::set_captured_piece(new_position_info, pieces[en_passant_capture_square]);
         pieces[en_passant_capture_square] = Piece::NONE;
     }
@@ -208,7 +210,7 @@ void Board::make_move(int move) {
     move_piece(start_square, target_square);
 
     if (Move::is_pawn_promotion(move)) {
-        int promoted_piece_type = Move::get_pawn_promotion_piece_type(move);
+        PieceType_t promoted_piece_type = Move::get_pawn_promotion_piece_type(move);
         pieces[target_square] = Piece::create_piece(promoted_piece_type, moving_color);
     }
 
@@ -245,12 +247,12 @@ void Board::make_move(int move) {
     position_info = new_position_info;
 }
 
-void Board::unmake_move(int move) {
-    int start_square = Move::get_start_square(move);
-    int target_square = Move::get_target_square(move);
+void Board::unmake_move(Move_t move) {
+    Square_t start_square = Move::get_start_square(move);
+    Square_t target_square = Move::get_target_square(move);
     int move_flag = Move::get_flag(move);
 
-    int previous_position_info = previous_positions.top();
+    PositionInfo_t previous_position_info = previous_positions.top();
     previous_positions.pop();
 
 

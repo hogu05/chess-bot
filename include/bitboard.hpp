@@ -1,20 +1,20 @@
 #ifndef BITBOARD_H
 #define BITBOARD_H
 
-#include <cstdint>
+#include "types.hpp"
 
 namespace Bitboard {
-    void set_square(uint64_t& bitboard, int square);
-    void clear_square(uint64_t& bitboard, int square);
-    int pop_square(uint64_t& bitboard);
-    int get_square(uint64_t bitboard);
-    bool is_set(uint64_t bitboard, int square);
-    bool is_clear(uint64_t bitboard, int square);
-    void clear_all(uint64_t& bitboard);
-    void set_all(uint64_t& bitboard);
-    uint64_t create_bitboard(int square);
-    void print_bitboard(uint64_t bitboard);
-};
+    void set_square(Bitboard_t& bitboard, Square_t square);
+    void clear_square(Bitboard_t& bitboard, Square_t square);
+    Square_t pop_square(Bitboard_t& bitboard);
+    Square_t get_square(Bitboard_t bitboard);
+    bool is_set(Bitboard_t bitboard, Square_t square);
+    bool is_clear(Bitboard_t bitboard, Square_t square);
+    void clear_all(Bitboard_t& bitboard);
+    void set_all(Bitboard_t& bitboard);
+    Bitboard_t create_bitboard(Square_t square);
+    void print_bitboard(Bitboard_t bitboard);
+}
 
 
 

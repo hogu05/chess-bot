@@ -1,7 +1,7 @@
 #include "directions.hpp"
 #include "board.hpp"
 
-int Directions::get_direction_index(int direction) {
+int Directions::get_direction_index(Direction_t direction) {
     switch (direction) {
         case NORTH:
             return 0;
@@ -24,21 +24,21 @@ int Directions::get_direction_index(int direction) {
     }
 }
 
-bool Directions::is_diagonal_direction(int direction) {
+bool Directions::is_diagonal_direction(Direction_t direction) {
     if (get_direction_index(direction) >= 4) {
         return true;
     }
     return false;
 }
 
-bool Directions::is_orthogonal_direction(int direction) {
+bool Directions::is_orthogonal_direction(Direction_t direction) {
     if (get_direction_index(direction) <= 3) {
         return true;
     }
     return false;
 }
 
-int Directions::get_ray_direction(int start_square, int end_square) {
+Direction_t Directions::get_ray_direction(Square_t start_square, Square_t end_square) {
     int file_diff = Board::get_file(end_square) - Board::get_file(start_square);
     int rank_diff = Board::get_rank(end_square) - Board::get_rank(start_square);
 
