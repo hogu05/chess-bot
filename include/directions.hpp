@@ -5,7 +5,8 @@
 
 #include <array>
 
-namespace Directions {
+namespace Directions
+{
     constexpr Direction_t NORTH = +8;
     constexpr Direction_t EAST = +1;
     constexpr Direction_t SOUTH = -8;
@@ -15,7 +16,8 @@ namespace Directions {
     constexpr Direction_t SOUTH_WEST = SOUTH + WEST;
     constexpr Direction_t NORTH_WEST = NORTH + WEST;
 
-    constexpr std::array<Direction_t, 8> sliding_directions = { // TODO: Maybe rename later
+    constexpr std::array<Direction_t, 8> sliding_directions = {
+        // TODO: Maybe rename later
         NORTH,
         EAST,
         SOUTH,
@@ -59,12 +61,13 @@ namespace Directions {
     };
 
     int get_direction_index(Direction_t direction);
+
     bool is_diagonal_direction(Direction_t direction);
+
     bool is_orthogonal_direction(Direction_t direction);
 
     Direction_t get_ray_direction(Square_t start_square, Square_t end_square);
 };
-
 
 
 #endif

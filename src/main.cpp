@@ -5,7 +5,8 @@
 #include <iostream>
 #include <chrono>
 
-int main() {
+int main()
+{
     auto board = Board();
     Precomputations::init_precomputations();
     board.load_position_from_fen("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
@@ -18,7 +19,7 @@ int main() {
 
     std::cout << "Nodes: " << nodes << std::endl;
     std::cout << "Time: " << duration.count() << " milliseconds" << std::endl;
-    std::cout << "Speed: " << nodes / duration.count() * 1000 << " N/s"<< std::endl;
+    std::cout << "Speed: " << nodes / duration.count() * 1000 << " N/s" << std::endl;
 
     return 0;
 }

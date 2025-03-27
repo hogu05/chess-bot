@@ -1,10 +1,10 @@
 #ifndef EVALUATOR_H
 #define EVALUATOR_H
 
-namespace Evaluator {
+namespace Evaluator
+{
     int evaluate();
 };
-
 
 
 #endif

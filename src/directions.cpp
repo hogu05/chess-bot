@@ -1,8 +1,10 @@
 #include "directions.hpp"
 #include "board.hpp"
 
-int Directions::get_direction_index(Direction_t direction) {
-    switch (direction) {
+int Directions::get_direction_index(Direction_t direction)
+{
+    switch (direction)
+    {
         case NORTH:
             return 0;
         case EAST:
@@ -24,51 +26,57 @@ int Directions::get_direction_index(Direction_t direction) {
     }
 }
 
-bool Directions::is_diagonal_direction(Direction_t direction) {
-    if (get_direction_index(direction) >= 4) {
+bool Directions::is_diagonal_direction(Direction_t direction)
+{
+    if (get_direction_index(direction) >= 4)
+    {
         return true;
     }
     return false;
 }
 
-bool Directions::is_orthogonal_direction(Direction_t direction) {
-    if (get_direction_index(direction) <= 3) {
+bool Directions::is_orthogonal_direction(Direction_t direction)
+{
+    if (get_direction_index(direction) <= 3)
+    {
         return true;
     }
     return false;
 }
 
-Direction_t Directions::get_ray_direction(Square_t start_square, Square_t end_square) {
+Direction_t Directions::get_ray_direction(Square_t start_square, Square_t end_square)
+{
     int file_diff = Board::get_file(end_square) - Board::get_file(start_square);
     int rank_diff = Board::get_rank(end_square) - Board::get_rank(start_square);
 
-    if (rank_diff > 0) {
-        if (file_diff > 0) {
+    if (rank_diff > 0)
+    {
+        if (file_diff > 0)
+        {
             return NORTH_EAST;
         }
-        if (file_diff < 0) {
+        if (file_diff < 0)
+        {
             return NORTH_WEST;
         }
         return NORTH;
     }
-
-    if (rank_diff == 0) {
-        if (file_diff > 0) {
+    if (rank_diff == 0)
+    {
+        if (file_diff > 0)
+        {
             return EAST;
         }
         return WEST;
     }
-
-    if (rank_diff < 0) {
-        if (file_diff > 0) {
-            return SOUTH_EAST;
-        }
-        if (file_diff < 0) {
-            return SOUTH_WEST;
-        }
-        return SOUTH;
+    if (file_diff > 0)
+    {
+        return SOUTH_EAST;
     }
-
-    return -1;
+    if (file_diff < 0)
+    {
+        return SOUTH_WEST;
+    }
+    return SOUTH;
 }
 

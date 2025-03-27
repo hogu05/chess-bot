@@ -3,7 +3,8 @@
 
 #include "types.hpp"
 
-namespace Piece {
+namespace Piece
+{
     constexpr PieceType_t NONE = 0b0000;
     constexpr PieceType_t PAWN = 0b0010;
     constexpr PieceType_t KNIGHT = 0b0100;
@@ -31,9 +32,11 @@ namespace Piece {
     constexpr Piece_t BLACK_KING = KING | BLACK;
 
     PieceType_t get_piece_type(Piece_t piece);
+
     Color_t get_piece_color(Piece_t piece);
 
     char get_piece_symbol(Piece_t piece);
+
     Piece_t get_piece_from_symbol(char symbol);
 
     Color_t get_other_color(Color_t color);
@@ -41,9 +44,11 @@ namespace Piece {
     Piece_t create_piece(PieceType_t piece_type, Color_t color);
 
     bool can_pawn_move_two_spaces(Square_t square, Color_t color);
+
     bool can_pawn_promote(Square_t square, Color_t color);
 
     bool can_move_in_direction(Piece_t piece, Direction_t direction);
+
     bool is_sliding_piece(Piece_t piece);
 };
 
