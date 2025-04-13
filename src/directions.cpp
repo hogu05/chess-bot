@@ -28,20 +28,12 @@ int Directions::get_direction_index(Direction_t direction)
 
 bool Directions::is_diagonal_direction(Direction_t direction)
 {
-    if (get_direction_index(direction) >= 4)
-    {
-        return true;
-    }
-    return false;
+    return get_direction_index(direction) >= 4;
 }
 
 bool Directions::is_orthogonal_direction(Direction_t direction)
 {
-    if (get_direction_index(direction) <= 3)
-    {
-        return true;
-    }
-    return false;
+    return get_direction_index(direction) <= 3;
 }
 
 Direction_t Directions::get_ray_direction(Square_t start_square, Square_t end_square)

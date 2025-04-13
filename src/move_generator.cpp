@@ -9,9 +9,7 @@
 #include <iostream>
 #include <ostream>
 
-MoveGenerator::MoveGenerator(Board &board) : board(board)
-{
-}
+MoveGenerator::MoveGenerator(Board &board) : board(board){}
 
 std::vector<Move_t> MoveGenerator::get_moves()
 {

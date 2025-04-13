@@ -112,9 +112,6 @@ void Board::load_position_from_fen(std::string fen)
         std::cout << position_info << std::endl;
     }
 
-    std::cout << position_info << std::endl;
-    std::cout << PositionInfo::get_to_move(position_info) << std::endl;
-
     // Getting castling rights
     for (char current_char: fen_info[2])
     {
