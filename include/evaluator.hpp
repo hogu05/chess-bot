@@ -1,9 +1,15 @@
 #ifndef EVALUATOR_H
 #define EVALUATOR_H
 
-namespace Evaluator
+#include "board.hpp"
+
+class Evaluator
 {
-    int evaluate();
+public:
+    explicit Evaluator(Board &board);
+    int get_evaluation();
+private:
+    Board &board;
 };
 
 
