@@ -1,12 +1,12 @@
 #include "board.hpp"
-#include "piece.hpp"
-#include "move.hpp"
-#include "position_info.hpp"
 
 #include <iostream>
-#include <string>
 #include <sstream>
+#include <string>
 
+#include "move.hpp"
+#include "piece.hpp"
+#include "position_info.hpp"
 
 int Board::get_file(int square)
 {
@@ -72,18 +72,18 @@ Square_t Board::get_en_passant_capture_square(int start_square, Color_t target_s
     return get_square(file, rank);
 }
 
-
 void Board::load_position_from_fen(std::string fen)
 {
     std::istringstream stream(fen);
     std::array<std::string, 6> fen_info;
-    stream >> fen_info[0] >> fen_info[1] >> fen_info[2] >> fen_info[3] >> fen_info[4] >> fen_info[5];
+    stream >> fen_info[0] >> fen_info[1] >> fen_info[2] >> fen_info[3] >> fen_info[4] >>
+        fen_info[5];
 
     position_info = 0;
 
     // Getting pieces
     Square_t square = 56;
-    for (char current_char: fen_info[0])
+    for (char current_char : fen_info[0])
     {
         if (current_char == '/')
         {
@@ -93,7 +93,8 @@ void Board::load_position_from_fen(std::string fen)
         if (std::isdigit(current_char))
         {
             square += current_char - '0';
-        } else
+        }
+        else
         {
             pieces[square] = Piece::get_piece_from_symbol(current_char);
             square++;
@@ -113,31 +114,32 @@ void Board::load_position_from_fen(std::string fen)
     }
 
     // Getting castling rights
-    for (char current_char: fen_info[2])
+    for (char current_char : fen_info[2])
     {
         switch (current_char)
         {
-            case 'K':
-                PositionInfo::set_castling_right(position_info, Piece::WHITE, true, true);
-                break;
-            case 'Q':
-                PositionInfo::set_castling_right(position_info, Piece::WHITE, false, true);
-                break;
-            case 'k':
-                PositionInfo::set_castling_right(position_info, Piece::BLACK, true, true);
-                break;
-            case 'q':
-                PositionInfo::set_castling_right(position_info, Piece::BLACK, false, true);
-                break;
-            default:
-                break;
+        case 'K':
+            PositionInfo::set_castling_right(position_info, Piece::WHITE, true, true);
+            break;
+        case 'Q':
+            PositionInfo::set_castling_right(position_info, Piece::WHITE, false, true);
+            break;
+        case 'k':
+            PositionInfo::set_castling_right(position_info, Piece::BLACK, true, true);
+            break;
+        case 'q':
+            PositionInfo::set_castling_right(position_info, Piece::BLACK, false, true);
+            break;
+        default:
+            break;
         }
     }
 
     // Getting en passant
     if (!fen_info[3].empty() && fen_info[3] != "-")
     {
-        PositionInfo::set_en_passant(position_info, true, get_file(get_square_from_notation(fen_info[3])));
+        PositionInfo::set_en_passant(position_info, true,
+                                     get_file(get_square_from_notation(fen_info[3])));
     }
 
     // Getting fifty move rule half-moves
@@ -191,7 +193,6 @@ PieceType_t Board::get_piece_type(Square_t square)
     return Piece::get_piece_type(pieces[square]);
 }
 
-
 void Board::move_piece(Square_t start_square, Square_t target_square)
 {
     pieces[target_square] = pieces[start_square];
@@ -201,7 +202,8 @@ void Board::move_piece(Square_t start_square, Square_t target_square)
 void Board::make_move(Move_t move)
 {
     PositionInfo_t new_position_info = 0;
-    PositionInfo::set_castling_rights(new_position_info, PositionInfo::get_castling_rights(position_info));
+    PositionInfo::set_castling_rights(new_position_info,
+                                      PositionInfo::get_castling_rights(position_info));
     Square_t start_square = Move::get_start_square(move);
     Square_t target_square = Move::get_target_square(move);
     int move_flag = Move::get_flag(move);
@@ -218,7 +220,8 @@ void Board::make_move(Move_t move)
 
     if (move_flag == Move::EN_PASSANT_FLAG)
     {
-        Square_t en_passant_capture_square = get_en_passant_capture_square(start_square, target_square);
+        Square_t en_passant_capture_square =
+            get_en_passant_capture_square(start_square, target_square);
         PositionInfo::set_captured_piece(new_position_info, pieces[en_passant_capture_square]);
         pieces[en_passant_capture_square] = Piece::NONE;
     }
@@ -302,10 +305,10 @@ void Board::unmake_move(Move_t move)
     PositionInfo_t previous_position_info = previous_positions.top();
     previous_positions.pop();
 
-
     if (Move::is_pawn_promotion(move))
     {
-        pieces[target_square] = Piece::create_piece(Piece::PAWN, PositionInfo::get_to_move(previous_position_info));
+        pieces[target_square] =
+            Piece::create_piece(Piece::PAWN, PositionInfo::get_to_move(previous_position_info));
     }
 
     move_piece(target_square, start_square);
@@ -315,14 +318,14 @@ void Board::unmake_move(Move_t move)
     {
         if (move_flag == Move::EN_PASSANT_FLAG)
         {
-            pieces[get_en_passant_capture_square(start_square, target_square)] = PositionInfo::get_captured_piece(
-                position_info);
-        } else
+            pieces[get_en_passant_capture_square(start_square, target_square)] =
+                PositionInfo::get_captured_piece(position_info);
+        }
+        else
         {
             pieces[target_square] = PositionInfo::get_captured_piece(position_info);
         }
     }
-
 
     if (move_flag == Move::CASTLE_FLAG)
     {

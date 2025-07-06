@@ -4,4 +4,16 @@ project(chess-bot)
 set(CMAKE_CXX_STANDARD 26)
 
 include_directories(include)
-add_executable(chess-bot src/main.cpp src/board.cpp src/piece.cpp src/move_generator.cpp src/move.cpp src/precomputations.cpp src/directions.cpp src/bitboard.cpp src/position_info.cpp src/evaluator.cpp)
+add_executable(
+    chess-bot
+    src/main.cpp
+    src/board.cpp
+    src/piece.cpp
+    src/move_generator.cpp
+    src/move.cpp
+    src/precomputations.cpp
+    src/directions.cpp
+    src/bitboard.cpp
+    src/position_info.cpp
+    src/evaluator.cpp
+)

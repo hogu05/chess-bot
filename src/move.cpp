@@ -1,9 +1,8 @@
 #include "move.hpp"
-#include "piece.hpp"
+
 #include "bitboard.hpp"
 #include "board.hpp"
-
-#include <ostream>
+#include "piece.hpp"
 
 Move_t Move::create_move(Square_t start_square, Square_t target_square, int flag)
 {
@@ -56,15 +55,15 @@ PieceType_t Move::get_pawn_promotion_piece_type(Move_t move)
 {
     switch (get_flag(move))
     {
-        case PROMOTE_TO_KNIGHT_FLAG:
-            return Piece::KNIGHT;
-        case PROMOTE_TO_BISHOP_FLAG:
-            return Piece::BISHOP;
-        case PROMOTE_TO_ROOK_FLAG:
-            return Piece::ROOK;
-        case PROMOTE_TO_QUEEN_FLAG:
-        default:
-            return Piece::QUEEN;
+    case PROMOTE_TO_KNIGHT_FLAG:
+        return Piece::KNIGHT;
+    case PROMOTE_TO_BISHOP_FLAG:
+        return Piece::BISHOP;
+    case PROMOTE_TO_ROOK_FLAG:
+        return Piece::ROOK;
+    case PROMOTE_TO_QUEEN_FLAG:
+    default:
+        return Piece::QUEEN;
     }
 }
 

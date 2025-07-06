@@ -1,20 +1,24 @@
 #include "move_generator.hpp"
-#include "bitboard.hpp"
-#include "piece.hpp"
-#include "precomputations.hpp"
-#include "move.hpp"
-#include "directions.hpp"
-#include "position_info.hpp"
 
 #include <iostream>
 #include <ostream>
 
-MoveGenerator::MoveGenerator(Board &board) : board(board){}
+#include "bitboard.hpp"
+#include "directions.hpp"
+#include "move.hpp"
+#include "piece.hpp"
+#include "position_info.hpp"
+#include "precomputations.hpp"
+
+MoveGenerator::MoveGenerator(Board &board) : board(board)
+{
+}
 
 std::vector<Move_t> MoveGenerator::get_moves()
 {
-    en_passant_square = Board::get_en_passant_square(PositionInfo::get_en_passant_file(board.position_info),
-                                                     PositionInfo::get_to_move(board.position_info));
+    en_passant_square =
+        Board::get_en_passant_square(PositionInfo::get_en_passant_file(board.position_info),
+                                     PositionInfo::get_to_move(board.position_info));
     init_bitboards();
     std::vector<Move_t> moves;
     if (!is_double_check)
@@ -32,7 +36,8 @@ std::vector<Move_t> MoveGenerator::get_moves()
             std::vector<Move_t> piece_moves = get_piece_moves(square);
             moves.insert(moves.end(), piece_moves.begin(), piece_moves.end());
         }
-    } else
+    }
+    else
     {
         moves = get_piece_moves(Bitboard::get_square(friendly_king_bb));
     }
@@ -46,7 +51,7 @@ int MoveGenerator::calculate_nodes(int depth)
         return 1;
     }
     int nodes = 0;
-    for (Move_t move: get_moves())
+    for (Move_t move : get_moves())
     {
         board.make_move(move);
         int move_nodes = calculate_nodes(depth - 1);
@@ -63,7 +68,7 @@ int MoveGenerator::calculate_nodes(int depth, bool debug)
         return 1;
     }
     int nodes = 0;
-    for (Move_t move: get_moves())
+    for (Move_t move : get_moves())
     {
         board.make_move(move);
         int move_nodes = calculate_nodes(depth - 1);
@@ -95,7 +100,8 @@ void MoveGenerator::init_bitboards()
                 {
                     Bitboard::set_square(friendly_king_bb, square);
                 }
-            } else
+            }
+            else
             {
                 Bitboard::set_square(enemy_pieces_bb, square);
             }
@@ -125,18 +131,18 @@ std::vector<Move_t> MoveGenerator::get_piece_moves(Square_t square)
     Color_t color = board.get_piece_color(square);
     switch (piece_type)
     {
-        case Piece::PAWN:
-            return get_pawn_moves(square, color);
-        case Piece::KNIGHT:
-            return get_knight_moves(square);
-        case Piece::BISHOP:
-        case Piece::ROOK:
-        case Piece::QUEEN:
-            return get_sliding_piece_moves(square, piece_type);
-        case Piece::KING:
-            return get_king_moves(square, color);
-        default:
-            return {};
+    case Piece::PAWN:
+        return get_pawn_moves(square, color);
+    case Piece::KNIGHT:
+        return get_knight_moves(square);
+    case Piece::BISHOP:
+    case Piece::ROOK:
+    case Piece::QUEEN:
+        return get_sliding_piece_moves(square, piece_type);
+    case Piece::KING:
+        return get_king_moves(square, color);
+    default:
+        return {};
     }
 }
 
@@ -152,16 +158,19 @@ std::vector<Move_t> MoveGenerator::get_pawn_moves(Square_t square, Color_t color
         {
             moves.push_back(Move::create_move(square, square + direction, Move::NO_FLAG));
         }
-        if (Piece::can_pawn_move_two_spaces(square, color) && Bitboard::is_clear(all_pieces_bb, square + direction * 2))
+        if (Piece::can_pawn_move_two_spaces(square, color) &&
+            Bitboard::is_clear(all_pieces_bb, square + direction * 2))
         {
             if (get_legal_squares(Bitboard::create_bitboard(square + direction * 2)) != 0)
             {
-                moves.push_back(Move::create_move(square, square + direction * 2, Move::TWO_SPACE_PAWN_MOVE_FLAG));
+                moves.push_back(Move::create_move(square, square + direction * 2,
+                                                  Move::TWO_SPACE_PAWN_MOVE_FLAG));
             }
         }
     }
 
-    Bitboard_t pseudo_legal_moves_bb = Precomputations::pawn_attacks[color][square] & enemy_pieces_bb;
+    Bitboard_t pseudo_legal_moves_bb =
+        Precomputations::pawn_attacks[color][square] & enemy_pieces_bb;
     Bitboard_t legal_moves_bb = get_legal_squares(pseudo_legal_moves_bb);
     std::vector<Move_t> legal_moves = Move::create_moves_from_bitboard(square, legal_moves_bb);
     moves.insert(moves.end(), legal_moves.begin(), legal_moves.end());
@@ -185,7 +194,7 @@ std::vector<Move_t> MoveGenerator::get_pawn_moves(Square_t square, Color_t color
 std::vector<Move_t> MoveGenerator::get_pawn_promotion_moves(std::vector<Move_t> moves)
 {
     std::vector<Move_t> promotion_moves;
-    for (Move_t move: moves)
+    for (Move_t move : moves)
     {
         promotion_moves.push_back(Move::create_move(move, Move::PROMOTE_TO_KNIGHT_FLAG));
         promotion_moves.push_back(Move::create_move(move, Move::PROMOTE_TO_BISHOP_FLAG));
@@ -197,7 +206,8 @@ std::vector<Move_t> MoveGenerator::get_pawn_promotion_moves(std::vector<Move_t> 
 
 std::vector<Move_t> MoveGenerator::get_knight_moves(Square_t square)
 {
-    Bitboard_t pseudo_legal_moves_bb = Precomputations::knight_moves[square] & (~friendly_pieces_bb);
+    Bitboard_t pseudo_legal_moves_bb =
+        Precomputations::knight_moves[square] & (~friendly_pieces_bb);
     Bitboard_t legal_moves_bb = get_legal_squares(pseudo_legal_moves_bb);
     return Move::create_moves_from_bitboard(square, legal_moves_bb);
 }
@@ -207,8 +217,10 @@ std::vector<Move_t> MoveGenerator::get_sliding_piece_moves(Square_t square, Piec
     Bitboard_t pseudo_legal_moves_bb = 0;
     int start_index = 0;
     int end_index = 7;
-    if (piece == Piece::BISHOP) start_index += 4;
-    if (piece == Piece::ROOK) end_index -= 4;
+    if (piece == Piece::BISHOP)
+        start_index += 4;
+    if (piece == Piece::ROOK)
+        end_index -= 4;
 
     for (int direction_index = start_index; direction_index <= end_index; direction_index++)
     {
@@ -224,7 +236,8 @@ std::vector<Move_t> MoveGenerator::get_sliding_piece_moves(Square_t square, Piec
                 }
                 break;
             }
-            Bitboard::set_square(pseudo_legal_moves_bb, target_square);;
+            Bitboard::set_square(pseudo_legal_moves_bb, target_square);
+            ;
         }
     }
     Bitboard_t legal_moves_bb = get_legal_squares(pseudo_legal_moves_bb);
@@ -255,8 +268,8 @@ std::vector<Move_t> MoveGenerator::get_king_moves(Square_t square, Color_t color
             Bitboard::is_clear(all_pieces_bb, square - 2) &&
             Bitboard::is_clear(all_pieces_bb, square - 3))
         {
-            if (Bitboard::is_clear(attacked_squares_bb, square - 1)
-                && Bitboard::is_clear(attacked_squares_bb, square - 2))
+            if (Bitboard::is_clear(attacked_squares_bb, square - 1) &&
+                Bitboard::is_clear(attacked_squares_bb, square - 2))
             {
                 moves.push_back(Move::create_move(square, square - 2, Move::CASTLE_FLAG));
             }
@@ -279,7 +292,8 @@ Bitboard_t MoveGenerator::get_attacked_squares_and_update_checks()
             if (checking_piece_bb == 0)
             {
                 Bitboard::set_square(checking_piece_bb, square);
-            } else
+            }
+            else
             {
                 is_double_check = true;
             }
@@ -296,22 +310,22 @@ Bitboard_t MoveGenerator::get_piece_attacks(Square_t square)
     Color_t color = board.get_piece_color(square);
     switch (piece_type)
     {
-        case Piece::PAWN:
-            piece_attacks = get_pawn_attacks(square, color);
-            break;
-        case Piece::KNIGHT:
-            piece_attacks = get_knight_attacks(square);
-            break;
-        case Piece::BISHOP:
-        case Piece::ROOK:
-        case Piece::QUEEN:
-            piece_attacks = get_sliding_piece_attacks(square, piece_type);
-            break;
-        case Piece::KING:
-            piece_attacks = get_king_attacks(square);
-            break;
-        default:
-            piece_attacks = 0;
+    case Piece::PAWN:
+        piece_attacks = get_pawn_attacks(square, color);
+        break;
+    case Piece::KNIGHT:
+        piece_attacks = get_knight_attacks(square);
+        break;
+    case Piece::BISHOP:
+    case Piece::ROOK:
+    case Piece::QUEEN:
+        piece_attacks = get_sliding_piece_attacks(square, piece_type);
+        break;
+    case Piece::KING:
+        piece_attacks = get_king_attacks(square);
+        break;
+    default:
+        piece_attacks = 0;
     }
     return piece_attacks;
 }
@@ -332,8 +346,10 @@ Bitboard_t MoveGenerator::get_sliding_piece_attacks(Square_t square, Piece_t pie
 
     int start_index = 0;
     int end_index = 7;
-    if (piece == Piece::BISHOP) start_index += 4;
-    if (piece == Piece::ROOK) end_index -= 4;
+    if (piece == Piece::BISHOP)
+        start_index += 4;
+    if (piece == Piece::ROOK)
+        end_index -= 4;
 
     for (int direction_index = start_index; direction_index <= end_index; direction_index++)
     {
@@ -342,7 +358,8 @@ Bitboard_t MoveGenerator::get_sliding_piece_attacks(Square_t square, Piece_t pie
         {
             Square_t target_square = square + direction * i;
             Bitboard::set_square(attacks, target_square);
-            if (Bitboard::is_set(all_pieces_bb, target_square) && Bitboard::is_clear(friendly_king_bb, target_square))
+            if (Bitboard::is_set(all_pieces_bb, target_square) &&
+                Bitboard::is_clear(friendly_king_bb, target_square))
             {
                 break;
             }
@@ -360,7 +377,7 @@ Bitboard_t MoveGenerator::get_pinned_pieces()
 {
     Bitboard_t pinned_pieces = 0;
     Square_t square = Bitboard::get_square(friendly_king_bb);
-    for (Direction_t direction: Directions::sliding_directions)
+    for (Direction_t direction : Directions::sliding_directions)
     {
         Square_t pinned_piece_square = -1;
 
@@ -372,7 +389,8 @@ Bitboard_t MoveGenerator::get_pinned_pieces()
                 if (pinned_piece_square == -1)
                 {
                     pinned_piece_square = target_square;
-                } else
+                }
+                else
                 {
                     break;
                 }
@@ -381,7 +399,8 @@ Bitboard_t MoveGenerator::get_pinned_pieces()
             {
                 if (pinned_piece_square != -1)
                 {
-                    if (Piece::can_move_in_direction(board.get_piece_type(target_square), -1 * direction))
+                    if (Piece::can_move_in_direction(board.get_piece_type(target_square),
+                                                     -1 * direction))
                     {
                         Bitboard::set_square(pinned_pieces, pinned_piece_square);
                     }
@@ -472,6 +491,3 @@ bool MoveGenerator::is_en_passant_legal(Square_t start_square, Square_t target_s
     }
     return false;
 }
-
-
-

@@ -1,15 +1,15 @@
 #ifndef MOVE_GENERATOR_H
 #define MOVE_GENERATOR_H
 
-#include "types.hpp"
-
 #include <vector>
+
+#include "types.hpp"
 
 class Board;
 
 class MoveGenerator
 {
-public:
+  public:
     explicit MoveGenerator(Board &board);
 
     std::vector<Move_t> get_moves();
@@ -18,7 +18,7 @@ public:
 
     int calculate_nodes(int depth, bool debug);
 
-private:
+  private:
     Board &board;
 
     Bitboard_t friendly_pieces_bb = 0;
@@ -71,6 +71,5 @@ private:
 
     bool is_en_passant_legal(Square_t start_square, Square_t target_square);
 };
-
 
 #endif

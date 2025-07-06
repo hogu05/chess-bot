@@ -1,8 +1,9 @@
 #include "bitboard.hpp"
 
-#include <iostream>
 #include <bitset>
+#include <iostream>
 
+#include "types.hpp"
 
 void Bitboard::set_square(Bitboard_t &bitboard, Square_t square)
 {

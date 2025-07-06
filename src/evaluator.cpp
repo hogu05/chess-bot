@@ -1,12 +1,15 @@
 #include "evaluator.hpp"
+
 #include "piece.hpp"
 
-Evaluator::Evaluator(Board &board) : board(board){}
+Evaluator::Evaluator(Board &board) : board(board)
+{
+}
 
 int Evaluator::get_evaluation()
 {
     int evaluation = 0;
-    for (Piece_t piece: board.pieces)
+    for (Piece_t piece : board.pieces)
     {
         if (Piece::get_piece_color(piece) == Piece::WHITE)
         {

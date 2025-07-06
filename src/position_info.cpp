@@ -1,4 +1,5 @@
 #include "position_info.hpp"
+
 #include "piece.hpp"
 
 void PositionInfo::set_to_move(PositionInfo_t &position_info, Color_t to_move)
@@ -11,29 +12,34 @@ void PositionInfo::set_captured_piece(PositionInfo_t &position_info, Piece_t cap
     position_info = (position_info & ~CAPTURED_PIECE_MASK) | (captured_piece << 1);
 }
 
-void PositionInfo::set_en_passant(PositionInfo_t &position_info, bool en_passant_flag, int en_passant_file)
+void PositionInfo::set_en_passant(PositionInfo_t &position_info, bool en_passant_flag,
+                                  int en_passant_file)
 {
-    position_info = (position_info & ~EN_PASSANT_FLAG_MASK) | (en_passant_flag << 5) | (en_passant_file << 6);
+    position_info =
+        (position_info & ~EN_PASSANT_FLAG_MASK) | (en_passant_flag << 5) | (en_passant_file << 6);
 }
 
-void PositionInfo::set_castling_right(PositionInfo_t &position_info, Color_t color, bool short_castle,
-                                      bool castling_right)
+void PositionInfo::set_castling_right(PositionInfo_t &position_info, Color_t color,
+                                      bool short_castle, bool castling_right)
 {
     if (short_castle)
     {
         if (color == Piece::WHITE)
         {
             position_info = (position_info & ~SHORT_CASTLE_WHITE_MASK) | (castling_right << 9);
-        } else
+        }
+        else
         {
             position_info = (position_info & ~SHORT_CASTLE_BLACK_MASK) | (castling_right << 10);
         }
-    } else
+    }
+    else
     {
         if (color == Piece::WHITE)
         {
             position_info = (position_info & ~LONG_CASTLE_WHITE_MASK) | (castling_right << 11);
-        } else
+        }
+        else
         {
             position_info = (position_info & ~LONG_CASTLE_BLACK_MASK) | (castling_right << 12);
         }
@@ -42,8 +48,8 @@ void PositionInfo::set_castling_right(PositionInfo_t &position_info, Color_t col
 
 void PositionInfo::set_castling_rights(PositionInfo_t &position_info, int castling_rights)
 {
-    position_info = position_info & ~(SHORT_CASTLE_WHITE_MASK | SHORT_CASTLE_BLACK_MASK | LONG_CASTLE_WHITE_MASK |
-                                      LONG_CASTLE_BLACK_MASK);
+    position_info = position_info & ~(SHORT_CASTLE_WHITE_MASK | SHORT_CASTLE_BLACK_MASK |
+                                      LONG_CASTLE_WHITE_MASK | LONG_CASTLE_BLACK_MASK);
     position_info = position_info | (castling_rights << 9);
 }
 
@@ -51,7 +57,6 @@ void PositionInfo::set_fifty_move_ply(PositionInfo_t &position_info, int fifty_m
 {
     position_info = (position_info & ~FIFTY_MOVES_PLY_MASK) | (fifty_move_ply << 13);
 }
-
 
 Move_t PositionInfo::get_to_move(PositionInfo_t position_info)
 {
@@ -72,23 +77,27 @@ int PositionInfo::get_en_passant_file(PositionInfo_t position_info)
     return (position_info & EN_PASSANT_FILE_MASK) >> 6;
 }
 
-bool PositionInfo::get_castling_right(PositionInfo_t position_info, Color_t color, bool short_castle)
+bool PositionInfo::get_castling_right(PositionInfo_t position_info, Color_t color,
+                                      bool short_castle)
 {
     if (short_castle)
     {
         if (color == Piece::WHITE)
         {
             return (position_info & SHORT_CASTLE_WHITE_MASK) >> 9;
-        } else
+        }
+        else
         {
             return (position_info & SHORT_CASTLE_BLACK_MASK) >> 10;
         }
-    } else
+    }
+    else
     {
         if (color == Piece::WHITE)
         {
             return (position_info & LONG_CASTLE_WHITE_MASK) >> 11;
-        } else
+        }
+        else
         {
             return (position_info & LONG_CASTLE_BLACK_MASK) >> 12;
         }
@@ -97,8 +106,9 @@ bool PositionInfo::get_castling_right(PositionInfo_t position_info, Color_t colo
 
 int PositionInfo::get_castling_rights(PositionInfo_t position_info)
 {
-    return (position_info &
-            (SHORT_CASTLE_WHITE_MASK | SHORT_CASTLE_BLACK_MASK | LONG_CASTLE_WHITE_MASK | LONG_CASTLE_BLACK_MASK)) >> 9;
+    return (position_info & (SHORT_CASTLE_WHITE_MASK | SHORT_CASTLE_BLACK_MASK |
+                             LONG_CASTLE_WHITE_MASK | LONG_CASTLE_BLACK_MASK)) >>
+           9;
 }
 
 int PositionInfo::get_fifty_move_ply(PositionInfo_t position_info)

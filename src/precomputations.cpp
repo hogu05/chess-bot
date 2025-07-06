@@ -1,10 +1,11 @@
 #include "precomputations.hpp"
-#include "board.hpp"
-#include "directions.hpp"
-#include "bitboard.hpp"
-#include "piece.hpp"
 
 #include <iostream>
+
+#include "bitboard.hpp"
+#include "board.hpp"
+#include "directions.hpp"
+#include "piece.hpp"
 
 void Precomputations::init_precomputations()
 {
@@ -24,18 +25,20 @@ void Precomputations::calculate_squares_to_edge()
         {
             int square = Board::get_square(file, rank);
 
-            squares_to_edge[square][Directions::get_direction_index(Directions::NORTH)] = Board::RANKS - rank - 1;
-            squares_to_edge[square][Directions::get_direction_index(Directions::EAST)] = Board::FILES - file - 1;
+            squares_to_edge[square][Directions::get_direction_index(Directions::NORTH)] =
+                Board::RANKS - rank - 1;
+            squares_to_edge[square][Directions::get_direction_index(Directions::EAST)] =
+                Board::FILES - file - 1;
             squares_to_edge[square][Directions::get_direction_index(Directions::SOUTH)] = rank;
             squares_to_edge[square][Directions::get_direction_index(Directions::WEST)] = file;
             squares_to_edge[square][Directions::get_direction_index(Directions::NORTH_EAST)] =
-                    std::min(Board::RANKS - rank - 1, Board::FILES - file - 1);
+                std::min(Board::RANKS - rank - 1, Board::FILES - file - 1);
             squares_to_edge[square][Directions::get_direction_index(Directions::NORTH_WEST)] =
-                    std::min(Board::RANKS - rank - 1, file);
+                std::min(Board::RANKS - rank - 1, file);
             squares_to_edge[square][Directions::get_direction_index(Directions::SOUTH_EAST)] =
-                    std::min(rank, Board::FILES - file - 1);
+                std::min(rank, Board::FILES - file - 1);
             squares_to_edge[square][Directions::get_direction_index(Directions::SOUTH_WEST)] =
-                    std::min(rank, file);
+                std::min(rank, file);
         }
     }
 }
@@ -51,13 +54,14 @@ void Precomputations::calculate_pawn_attacks()
 {
     for (Square_t square = 0; square < Board::TOTAL_SQUARES; square++)
     {
-        for (Color_t color: {Piece::WHITE, Piece::BLACK})
+        for (Color_t color : {Piece::WHITE, Piece::BLACK})
         {
             Bitboard_t moves = 0;
-            for (Direction_t direction: Directions::pawn_attack_directions[color])
+            for (Direction_t direction : Directions::pawn_attack_directions[color])
             {
                 Square_t target_square = square + direction;
-                if (Board::is_valid_square(target_square) && get_squares_to_edge(square, direction) > 0)
+                if (Board::is_valid_square(target_square) &&
+                    get_squares_to_edge(square, direction) > 0)
                 {
                     Bitboard::set_square(moves, target_square);
                 }
@@ -74,7 +78,7 @@ void Precomputations::calculate_knight_moves()
     for (Square_t square = 0; square < Board::TOTAL_SQUARES; square++)
     {
         Bitboard_t moves = 0;
-        for (Direction_t direction: Directions::knight_directions)
+        for (Direction_t direction : Directions::knight_directions)
         {
             Square_t target_square = square + direction;
             if (Board::is_valid_square(target_square))
@@ -83,7 +87,7 @@ void Precomputations::calculate_knight_moves()
             }
         }
 
-        for (Direction_t direction: {Directions::EAST, Directions::WEST})
+        for (Direction_t direction : {Directions::EAST, Directions::WEST})
         {
             if (get_squares_to_edge(square, direction) < 2)
             {
@@ -107,7 +111,7 @@ void Precomputations::calculate_king_moves()
     for (Square_t square = 0; square < Board::TOTAL_SQUARES; square++)
     {
         Bitboard_t moves = 0;
-        for (Direction_t direction: Directions::sliding_directions)
+        for (Direction_t direction : Directions::sliding_directions)
         {
             Square_t target_square = square + direction;
             if (Board::is_valid_square(target_square) && get_squares_to_edge(square, direction) > 0)

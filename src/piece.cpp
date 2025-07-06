@@ -1,9 +1,9 @@
 #include "piece.hpp"
-#include "board.hpp"
-#include "directions.hpp"
 
 #include <cctype>
-#include <iostream>
+
+#include "board.hpp"
+#include "directions.hpp"
 
 PieceType_t Piece::get_piece_type(Piece_t piece)
 {
@@ -20,26 +20,26 @@ char Piece::get_piece_symbol(Piece_t piece)
     char piece_symbol;
     switch (get_piece_type(piece))
     {
-        case PAWN:
-            piece_symbol = 'p';
-            break;
-        case KNIGHT:
-            piece_symbol = 'n';
-            break;
-        case BISHOP:
-            piece_symbol = 'b';
-            break;
-        case ROOK:
-            piece_symbol = 'r';
-            break;
-        case QUEEN:
-            piece_symbol = 'q';
-            break;
-        case KING:
-            piece_symbol = 'k';
-            break;
-        default:
-            piece_symbol = '.';
+    case PAWN:
+        piece_symbol = 'p';
+        break;
+    case KNIGHT:
+        piece_symbol = 'n';
+        break;
+    case BISHOP:
+        piece_symbol = 'b';
+        break;
+    case ROOK:
+        piece_symbol = 'r';
+        break;
+    case QUEEN:
+        piece_symbol = 'q';
+        break;
+    case KING:
+        piece_symbol = 'k';
+        break;
+    default:
+        piece_symbol = '.';
     }
 
     if (get_piece_color(piece) == WHITE)
@@ -54,26 +54,26 @@ Piece_t Piece::get_piece_from_symbol(char symbol)
     Piece_t piece = 0;
     switch (tolower(symbol))
     {
-        case 'p':
-            piece = PAWN;
-            break;
-        case 'n':
-            piece = KNIGHT;
-            break;
-        case 'b':
-            piece = BISHOP;
-            break;
-        case 'r':
-            piece = ROOK;
-            break;
-        case 'q':
-            piece = QUEEN;
-            break;
-        case 'k':
-            piece = KING;
-            break;
-        default:
-            piece = NONE;
+    case 'p':
+        piece = PAWN;
+        break;
+    case 'n':
+        piece = KNIGHT;
+        break;
+    case 'b':
+        piece = BISHOP;
+        break;
+    case 'r':
+        piece = ROOK;
+        break;
+    case 'q':
+        piece = QUEEN;
+        break;
+    case 'k':
+        piece = KING;
+        break;
+    default:
+        piece = NONE;
     }
 
     if (islower(symbol))
@@ -87,7 +87,6 @@ Color_t Piece::get_other_color(Color_t color)
 {
     return color == WHITE ? BLACK : WHITE;
 }
-
 
 Piece_t Piece::create_piece(PieceType_t piece_type, Color_t color)
 {
@@ -116,11 +115,13 @@ bool Piece::can_pawn_promote(Square_t square, Color_t color)
 
 bool Piece::can_move_in_direction(PieceType_t piece_type, Direction_t direction)
 {
-    if ((piece_type == BISHOP || piece_type == QUEEN) && Directions::is_diagonal_direction(direction))
+    if ((piece_type == BISHOP || piece_type == QUEEN) &&
+        Directions::is_diagonal_direction(direction))
     {
         return true;
     }
-    if ((piece_type == ROOK || piece_type == QUEEN) && Directions::is_orthogonal_direction(direction))
+    if ((piece_type == ROOK || piece_type == QUEEN) &&
+        Directions::is_orthogonal_direction(direction))
     {
         return true;
     }
@@ -140,18 +141,17 @@ int Piece::get_piece_value(Piece_t piece)
 {
     switch (get_piece_type(piece))
     {
-        case PAWN:
-            return 1;
-        case KNIGHT:
-        case BISHOP:
-            return 3;
-        case ROOK:
-            return 5;
-        case QUEEN:
-            return 9;
-        case KING:
-        default:
-            return 0;
+    case PAWN:
+        return 1;
+    case KNIGHT:
+    case BISHOP:
+        return 3;
+    case ROOK:
+        return 5;
+    case QUEEN:
+        return 9;
+    case KING:
+    default:
+        return 0;
     }
 }
-

@@ -5,12 +5,12 @@
 
 class Evaluator
 {
-public:
+  public:
     explicit Evaluator(Board &board);
     int get_evaluation();
-private:
+
+  private:
     Board &board;
 };
-
 
 #endif
