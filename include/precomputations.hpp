@@ -13,7 +13,7 @@ class Precomputations
 
     static int get_squares_to_edge(Square_t square, Direction_t direction);
 
-    static std::array<std::array<Bitboard_t, Board::TOTAL_SQUARES>, 2> pawn_attacks;
+    static std::array<std::array<Bitboard_t, Board::TOTAL_SQUARES>, Board::COLORS> pawn_attacks;
     static std::array<Bitboard_t, Board::TOTAL_SQUARES> knight_moves;
     static std::array<Bitboard_t, Board::TOTAL_SQUARES> king_moves;
 

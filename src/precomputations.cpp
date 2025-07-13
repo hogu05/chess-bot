@@ -1,7 +1,5 @@
 #include "precomputations.hpp"
 
-#include <iostream>
-
 #include "bitboard.hpp"
 #include "board.hpp"
 #include "directions.hpp"
@@ -48,7 +46,8 @@ int Precomputations::get_squares_to_edge(Square_t square, Direction_t direction)
     return squares_to_edge[square][Directions::get_direction_index(direction)];
 }
 
-std::array<std::array<Bitboard_t, Board::TOTAL_SQUARES>, 2> Precomputations::pawn_attacks;
+std::array<std::array<Bitboard_t, Board::TOTAL_SQUARES>, Board::COLORS>
+    Precomputations::pawn_attacks;
 
 void Precomputations::calculate_pawn_attacks()
 {

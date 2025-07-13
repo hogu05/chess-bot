@@ -12,6 +12,8 @@ class Board
   public:
     static constexpr int FILES = 8;
     static constexpr int RANKS = 8;
+    static constexpr int COLORS = 2;
+
     static constexpr int TOTAL_SQUARES = FILES * RANKS;
 
     static int get_file(Square_t square);
@@ -28,8 +30,8 @@ class Board
 
     static Square_t get_en_passant_capture_square(Square_t start_square, Square_t target_square);
 
-    std::array<Piece_t, 64> pieces{};
-    PositionInfo_t position_info{};
+    std::array<Piece_t, FILES * RANKS> pieces;
+    PositionInfo_t position_info;
     std::stack<PositionInfo_t> previous_positions;
 
     void load_position_from_fen(std::string fen);
@@ -117,9 +119,9 @@ class Board
         h8
     };
 
-    static constexpr std::array<Square_t, 2> KING_START_SQUARE = {e1, e8};
-    static constexpr std::array<Square_t, 2> QUEENSIDE_ROOK_START_SQUARE = {a1, a8};
-    static constexpr std::array<Square_t, 2> KINGSIDE_ROOK_START_SQUARE = {h1, h8};
+    static constexpr std::array<Square_t, COLORS> KING_START_SQUARE = {e1, e8};
+    static constexpr std::array<Square_t, COLORS> QUEENSIDE_ROOK_START_SQUARE = {a1, a8};
+    static constexpr std::array<Square_t, COLORS> KINGSIDE_ROOK_START_SQUARE = {h1, h8};
 
     static int get_file_from_notation(char notation);
 
@@ -128,6 +130,8 @@ class Board
     static Square_t get_square_from_notation(std::string notation);
 
     void move_piece(Square_t start_square, Square_t target_square);
+
+    void reset();
 };
 
 #endif

@@ -32,11 +32,11 @@ std::vector<TestResult> run_tests(std::vector<TestCase> tests)
 
     Precomputations::init_precomputations();
 
+    Board board;
+    MoveGenerator generator(board);
+
     for (int i = 0; i < tests.size(); i++)
     {
-        Board board;
-        MoveGenerator generator(board);
-
         TestCase &test = tests[i];
 
         board.load_position_from_fen(test.fen);

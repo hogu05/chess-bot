@@ -74,12 +74,12 @@ Square_t Board::get_en_passant_capture_square(int start_square, Color_t target_s
 
 void Board::load_position_from_fen(std::string fen)
 {
+    reset();
+
     std::istringstream stream(fen);
     std::array<std::string, 6> fen_info;
     stream >> fen_info[0] >> fen_info[1] >> fen_info[2] >> fen_info[3] >> fen_info[4] >>
         fen_info[5];
-
-    position_info = 0;
 
     // Getting pieces
     Square_t square = 56;
@@ -345,4 +345,11 @@ void Board::unmake_move(Move_t move)
     // TODO: threefold
 
     position_info = previous_position_info;
+}
+
+void Board::reset()
+{
+    pieces.fill(Piece::NONE);
+    position_info = 0;
+    previous_positions = {};
 }
