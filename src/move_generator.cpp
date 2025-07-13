@@ -1,8 +1,5 @@
 #include "move_generator.hpp"
 
-#include <iostream>
-#include <ostream>
-
 #include "bitboard.hpp"
 #include "directions.hpp"
 #include "move.hpp"
@@ -44,7 +41,7 @@ std::vector<Move_t> MoveGenerator::get_moves()
     return moves;
 }
 
-int MoveGenerator::calculate_nodes(int depth)
+int MoveGenerator::perft(int depth)
 {
     if (depth == 0)
     {
@@ -54,28 +51,7 @@ int MoveGenerator::calculate_nodes(int depth)
     for (Move_t move : get_moves())
     {
         board.make_move(move);
-        int move_nodes = calculate_nodes(depth - 1);
-        nodes += move_nodes;
-        board.unmake_move(move);
-    }
-    return nodes;
-}
-
-int MoveGenerator::calculate_nodes(int depth, bool debug)
-{
-    if (depth == 0)
-    {
-        return 1;
-    }
-    int nodes = 0;
-    for (Move_t move : get_moves())
-    {
-        board.make_move(move);
-        int move_nodes = calculate_nodes(depth - 1);
-        if (debug)
-        {
-            std::cout << Move::get_move_notation(move) << ": " << move_nodes << std::endl;
-        }
+        int move_nodes = perft(depth - 1);
         nodes += move_nodes;
         board.unmake_move(move);
     }

@@ -14,9 +14,7 @@ class MoveGenerator
 
     std::vector<Move_t> get_moves();
 
-    int calculate_nodes(int depth);
-
-    int calculate_nodes(int depth, bool debug);
+    int perft(int depth);
 
   private:
     Board &board;
