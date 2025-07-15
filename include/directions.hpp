@@ -19,6 +19,7 @@ constexpr Direction_t NORTH_WEST = NORTH + WEST;
 
 constexpr std::array<Direction_t, 8> sliding_directions = {
     NORTH, EAST, SOUTH, WEST, NORTH_EAST, SOUTH_EAST, SOUTH_WEST, NORTH_WEST};
+constexpr int LAST_ORTHOGONAL_DIRECTION_INDEX = 3;
 
 constexpr std::array<Direction_t, 8> knight_directions = {
     NORTH + NORTH + EAST, NORTH + EAST + EAST, SOUTH + EAST + EAST, SOUTH + SOUTH + EAST,

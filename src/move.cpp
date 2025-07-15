@@ -7,16 +7,16 @@
 Move_t Move::create_move(Square_t start_square, Square_t target_square, int flag)
 {
     Move_t move = 0;
-    move = move | start_square;
-    move = move | (target_square << 6);
-    move = move | (flag << 12);
+    move = move | (start_square << START_SQUARE_SHIFT);
+    move = move | (target_square << TARGET_SQUARE_SHIFT);
+    move = move | (flag << FLAG_SHIFT);
     return move;
 }
 
 Move_t Move::create_move(Move_t move, int flag)
 {
     move &= ~FLAG_MASK;
-    move |= (flag << 12);
+    move |= (flag << FLAG_SHIFT);
     return move;
 }
 
@@ -33,17 +33,17 @@ std::vector<Move_t> Move::create_moves_from_bitboard(Square_t start_square, Bitb
 
 Square_t Move::get_start_square(Move_t move)
 {
-    return move & START_SQUARE_MASK;
+    return (move & START_SQUARE_MASK) >> START_SQUARE_SHIFT;
 }
 
 Square_t Move::get_target_square(Move_t move)
 {
-    return (move & TARGET_SQUARE_MASK) >> 6;
+    return (move & TARGET_SQUARE_MASK) >> TARGET_SQUARE_SHIFT;
 }
 
 int Move::get_flag(Move_t move)
 {
-    return (move & FLAG_MASK) >> 12;
+    return (move & FLAG_MASK) >> FLAG_SHIFT;
 }
 
 bool Move::is_pawn_promotion(Move_t move)

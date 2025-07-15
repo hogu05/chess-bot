@@ -1,22 +1,28 @@
 #ifndef PIECE_H
 #define PIECE_H
 
+#include "bit_utils.hpp"
 #include "types.hpp"
 
 namespace Piece
 {
-constexpr PieceType_t NONE = 0b0000;
-constexpr PieceType_t PAWN = 0b0010;
-constexpr PieceType_t KNIGHT = 0b0100;
-constexpr PieceType_t BISHOP = 0b0110;
-constexpr PieceType_t ROOK = 0b1000;
-constexpr PieceType_t QUEEN = 0b1010;
-constexpr PieceType_t KING = 0b1100;
-constexpr int PIECE_TYPE_MASK = 0b1110;
 
-constexpr Color_t WHITE = 0b0000;
-constexpr Color_t BLACK = 0b0001;
-constexpr int PIECE_COLOR_MASK = 0b0001;
+constexpr int PIECE_COLOR_SHIFT = 0;
+constexpr int PIECE_TYPE_SHIFT = 1;
+
+constexpr int PIECE_COLOR_MASK = BitUtils::mask(PIECE_COLOR_SHIFT, 1);
+constexpr int PIECE_TYPE_MASK = BitUtils::mask(PIECE_TYPE_SHIFT, 3);
+
+constexpr PieceType_t NONE = 0b000;
+constexpr PieceType_t PAWN = 0b001;
+constexpr PieceType_t KNIGHT = 0b010;
+constexpr PieceType_t BISHOP = 0b011;
+constexpr PieceType_t ROOK = 0b100;
+constexpr PieceType_t QUEEN = 0b101;
+constexpr PieceType_t KING = 0b110;
+
+constexpr Color_t WHITE = 0;
+constexpr Color_t BLACK = 1;
 
 constexpr Piece_t WHITE_PAWN = PAWN | WHITE;
 constexpr Piece_t WHITE_KNIGHT = KNIGHT | WHITE;

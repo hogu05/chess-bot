@@ -4,14 +4,21 @@
 #include <string>
 #include <vector>
 
+#include "bit_utils.hpp"
 #include "types.hpp"
 
 namespace Move
 {
-constexpr int START_SQUARE_MASK = 0b000000000111111;   // 000000000111111
-constexpr int TARGET_SQUARE_MASK = 0b000111111000000;  // 000111111000000
-constexpr int FLAG_MASK = 0b111000000000000;           // 111000000000000
-constexpr int PAWN_PROMOTION_MASK = 0b100000000000000; // 100000000000000
+
+constexpr int START_SQUARE_SHIFT = 0;
+constexpr int TARGET_SQUARE_SHIFT = 6;
+constexpr int FLAG_SHIFT = 12;
+constexpr int PAWN_PROMOTION_SHIFT = 14;
+
+constexpr int START_SQUARE_MASK = BitUtils::mask(START_SQUARE_SHIFT, 6);
+constexpr int TARGET_SQUARE_MASK = BitUtils::mask(TARGET_SQUARE_SHIFT, 6);
+constexpr int FLAG_MASK = BitUtils::mask(FLAG_SHIFT, 3);
+constexpr int PAWN_PROMOTION_MASK = BitUtils::mask(PAWN_PROMOTION_SHIFT, 1);
 
 constexpr int NO_FLAG = 0b000;
 constexpr int EN_PASSANT_FLAG = 0b001;

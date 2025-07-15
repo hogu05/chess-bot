@@ -27,7 +27,6 @@ std::vector<Move_t> MoveGenerator::get_moves()
             Bitboard::set_all(pinned_piece_possible_squares_bb);
             if (Bitboard::is_set(pinned_pieces_bb, square))
             {
-                Bitboard::clear_all(pinned_piece_possible_squares_bb);
                 pinned_piece_possible_squares_bb = get_pinned_piece_possible_squares(square);
             }
             std::vector<Move_t> piece_moves = get_piece_moves(square);
@@ -191,12 +190,17 @@ std::vector<Move_t> MoveGenerator::get_knight_moves(Square_t square)
 std::vector<Move_t> MoveGenerator::get_sliding_piece_moves(Square_t square, Piece_t piece)
 {
     Bitboard_t pseudo_legal_moves_bb = 0;
+
     int start_index = 0;
-    int end_index = 7;
+    int end_index = Directions::sliding_directions.size() - 1;
     if (piece == Piece::BISHOP)
-        start_index += 4;
+    {
+        start_index = Directions::LAST_ORTHOGONAL_DIRECTION_INDEX + 1;
+    }
     if (piece == Piece::ROOK)
-        end_index -= 4;
+    {
+        end_index = Directions::LAST_ORTHOGONAL_DIRECTION_INDEX;
+    }
 
     for (int direction_index = start_index; direction_index <= end_index; direction_index++)
     {
@@ -213,7 +217,6 @@ std::vector<Move_t> MoveGenerator::get_sliding_piece_moves(Square_t square, Piec
                 break;
             }
             Bitboard::set_square(pseudo_legal_moves_bb, target_square);
-            ;
         }
     }
     Bitboard_t legal_moves_bb = get_legal_squares(pseudo_legal_moves_bb);
@@ -321,11 +324,15 @@ Bitboard_t MoveGenerator::get_sliding_piece_attacks(Square_t square, Piece_t pie
     Bitboard_t attacks = 0;
 
     int start_index = 0;
-    int end_index = 7;
+    int end_index = Directions::sliding_directions.size() - 1;
     if (piece == Piece::BISHOP)
-        start_index += 4;
+    {
+        start_index = Directions::LAST_ORTHOGONAL_DIRECTION_INDEX + 1;
+    }
     if (piece == Piece::ROOK)
-        end_index -= 4;
+    {
+        end_index = Directions::LAST_ORTHOGONAL_DIRECTION_INDEX;
+    }
 
     for (int direction_index = start_index; direction_index <= end_index; direction_index++)
     {

@@ -7,12 +7,12 @@
 
 PieceType_t Piece::get_piece_type(Piece_t piece)
 {
-    return piece & PIECE_TYPE_MASK;
+    return (piece & PIECE_TYPE_MASK) >> PIECE_TYPE_SHIFT;
 }
 
 Color_t Piece::get_piece_color(Piece_t piece)
 {
-    return piece & PIECE_COLOR_MASK;
+    return (piece & PIECE_COLOR_MASK) >> PIECE_COLOR_SHIFT;
 }
 
 char Piece::get_piece_symbol(Piece_t piece)
@@ -42,45 +42,40 @@ char Piece::get_piece_symbol(Piece_t piece)
         piece_symbol = '.';
     }
 
-    if (get_piece_color(piece) == WHITE)
-    {
-        piece_symbol = toupper(piece_symbol);
-    }
+    piece_symbol = get_piece_color(piece) == WHITE ? std::toupper(piece_symbol) : piece_symbol;
     return piece_symbol;
 }
 
 Piece_t Piece::get_piece_from_symbol(char symbol)
 {
-    Piece_t piece = 0;
+    PieceType_t piece_type;
     switch (tolower(symbol))
     {
     case 'p':
-        piece = PAWN;
+        piece_type = PAWN;
         break;
     case 'n':
-        piece = KNIGHT;
+        piece_type = KNIGHT;
         break;
     case 'b':
-        piece = BISHOP;
+        piece_type = BISHOP;
         break;
     case 'r':
-        piece = ROOK;
+        piece_type = ROOK;
         break;
     case 'q':
-        piece = QUEEN;
+        piece_type = QUEEN;
         break;
     case 'k':
-        piece = KING;
+        piece_type = KING;
         break;
     default:
-        piece = NONE;
+        piece_type = NONE;
     }
 
-    if (islower(symbol))
-    {
-        piece = piece | BLACK;
-    }
-    return piece;
+    Color_t piece_color = std::isupper(symbol) ? WHITE : BLACK;
+
+    return create_piece(piece_type, piece_color);
 }
 
 Color_t Piece::get_other_color(Color_t color)
@@ -88,15 +83,15 @@ Color_t Piece::get_other_color(Color_t color)
     return color == WHITE ? BLACK : WHITE;
 }
 
-Piece_t Piece::create_piece(PieceType_t piece_type, Color_t color)
+Piece_t Piece::create_piece(PieceType_t type, Color_t color)
 {
-    return piece_type | color;
+    return (color << PIECE_COLOR_SHIFT) | (type << PIECE_TYPE_SHIFT);
 }
 
 bool Piece::can_pawn_move_two_spaces(Square_t square, Color_t color)
 {
     int rank = Board::get_rank(square);
-    if ((color == WHITE && rank == 1) || (color == BLACK && rank == 6))
+    if ((color == WHITE && rank == 1) || (color == BLACK && rank == Board::RANKS - 2))
     {
         return true;
     }
@@ -106,7 +101,7 @@ bool Piece::can_pawn_move_two_spaces(Square_t square, Color_t color)
 bool Piece::can_pawn_promote(Square_t square, Color_t color)
 {
     int rank = Board::get_rank(square);
-    if ((color == WHITE && rank == 6) || (color == BLACK && rank == 1))
+    if ((color == WHITE && rank == Board::RANKS - 2) || (color == BLACK && rank == 1))
     {
         return true;
     }

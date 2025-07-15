@@ -19,17 +19,16 @@ class MoveGenerator
   private:
     Board &board;
 
-    Bitboard_t friendly_pieces_bb = 0;
-    Bitboard_t enemy_pieces_bb = 0;
-    Bitboard_t all_pieces_bb = 0;
-    Bitboard_t friendly_king_bb = 0;
-    Square_t en_passant_square = 0;
-
-    Bitboard_t attacked_squares_bb = 0;
-    Bitboard_t checking_piece_bb = 0;
-    Bitboard_t blocking_squares_bb = 0;
-    Bitboard_t pinned_pieces_bb = 0;
-    Bitboard_t pinned_piece_possible_squares_bb = 0;
+    Bitboard_t friendly_pieces_bb;
+    Bitboard_t enemy_pieces_bb;
+    Bitboard_t all_pieces_bb;
+    Bitboard_t friendly_king_bb;
+    Square_t en_passant_square;
+    Bitboard_t attacked_squares_bb;
+    Bitboard_t checking_piece_bb;
+    Bitboard_t blocking_squares_bb;
+    Bitboard_t pinned_pieces_bb;
+    Bitboard_t pinned_piece_possible_squares_bb;
 
     bool is_double_check = false;
 

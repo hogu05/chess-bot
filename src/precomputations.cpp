@@ -13,7 +13,8 @@ void Precomputations::init_precomputations()
     calculate_king_moves();
 }
 
-std::array<std::array<int, 8>, Board::TOTAL_SQUARES> Precomputations::squares_to_edge;
+std::array<std::array<int, Directions::sliding_directions.size()>, Board::TOTAL_SQUARES>
+    Precomputations::squares_to_edge;
 
 void Precomputations::calculate_squares_to_edge()
 {

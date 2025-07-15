@@ -29,12 +29,12 @@ int Directions::get_direction_index(Direction_t direction)
 
 bool Directions::is_diagonal_direction(Direction_t direction)
 {
-    return get_direction_index(direction) >= 4;
+    return get_direction_index(direction) > LAST_ORTHOGONAL_DIRECTION_INDEX;
 }
 
 bool Directions::is_orthogonal_direction(Direction_t direction)
 {
-    return get_direction_index(direction) <= 3;
+    return get_direction_index(direction) <= LAST_ORTHOGONAL_DIRECTION_INDEX;
 }
 
 Direction_t Directions::get_ray_direction(Square_t start_square, Square_t end_square)
