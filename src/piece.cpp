@@ -132,19 +132,19 @@ bool Piece::is_sliding_piece(PieceType_t piece_type)
     return false;
 }
 
-int Piece::get_piece_value(Piece_t piece)
+int Piece::get_piece_value(PieceType_t piece)
 {
-    switch (get_piece_type(piece))
+    switch (piece)
     {
     case PAWN:
-        return 1;
+        return 100;
     case KNIGHT:
     case BISHOP:
-        return 3;
+        return 300;
     case ROOK:
-        return 5;
+        return 500;
     case QUEEN:
-        return 9;
+        return 900;
     case KING:
     default:
         return 0;

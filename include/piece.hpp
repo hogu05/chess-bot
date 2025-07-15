@@ -57,7 +57,7 @@ bool can_move_in_direction(Piece_t piece, Direction_t direction);
 
 bool is_sliding_piece(Piece_t piece);
 
-int get_piece_value(Piece_t piece);
+int get_piece_value(PieceType_t piece);
 }; // namespace Piece
 
 #endif

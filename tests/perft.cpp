@@ -39,7 +39,7 @@ std::vector<TestResult> run_tests(std::vector<TestCase> tests)
     {
         TestCase &test = tests[i];
 
-        board.load_position_from_fen(test.fen);
+        board.load_position(test.fen);
 
         auto start = std::chrono::high_resolution_clock::now();
         std::uint64_t nodes = generator.perft(test.depth);

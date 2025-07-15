@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 26)
 include_directories(include)
 
 set(CHESS_SOURCES
+    src/bot.cpp
     src/board.cpp
     src/piece.cpp
     src/move_generator.cpp

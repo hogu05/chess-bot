@@ -1,6 +1,7 @@
 #include "position_info.hpp"
 
 #include "piece.hpp"
+#include "types.hpp"
 
 void PositionInfo::set_to_move(PositionInfo_t &position_info, Color_t to_move)
 {
@@ -64,7 +65,7 @@ void PositionInfo::set_fifty_move_ply(PositionInfo_t &position_info, int fifty_m
         (position_info & ~FIFTY_MOVES_PLY_MASK) | (fifty_move_ply << FIFTY_MOVES_PLY_SHIFT);
 }
 
-Move_t PositionInfo::get_to_move(PositionInfo_t position_info)
+Color_t PositionInfo::get_to_move(PositionInfo_t position_info)
 {
     return position_info & TO_MOVE_MASK;
 }

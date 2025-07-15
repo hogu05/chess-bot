@@ -14,6 +14,8 @@ class MoveGenerator
 
     std::vector<Move_t> get_moves();
 
+    bool is_check();
+
     int perft(int depth);
 
   private:
@@ -46,7 +48,7 @@ class MoveGenerator
 
     void init_bitboards();
 
-    Bitboard_t get_attacked_squares_and_update_checks();
+    void update_attacks();
 
     Bitboard_t get_piece_attacks(Square_t square);
 

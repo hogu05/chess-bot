@@ -72,7 +72,7 @@ Square_t Board::get_en_passant_capture_square(int start_square, Color_t target_s
     return get_square(file, rank);
 }
 
-void Board::load_position_from_fen(std::string fen)
+void Board::load_position(std::string fen)
 {
     reset();
 
@@ -212,17 +212,12 @@ void Board::make_move(Move_t move)
 
     PositionInfo::set_to_move(new_position_info, next_move_color);
 
-    bool is_capture = is_occupied(target_square);
-    if (is_capture)
-    {
-        PositionInfo::set_captured_piece(new_position_info, pieces[target_square]);
-    }
+    PositionInfo::set_captured_piece(new_position_info, get_captured_piece(move));
 
     if (move_flag == Move::EN_PASSANT_FLAG)
     {
         Square_t en_passant_capture_square =
             get_en_passant_capture_square(start_square, target_square);
-        PositionInfo::set_captured_piece(new_position_info, pieces[en_passant_capture_square]);
         pieces[en_passant_capture_square] = Piece::NONE;
     }
 
@@ -352,4 +347,16 @@ void Board::reset()
     pieces.fill(Piece::NONE);
     position_info = 0;
     previous_positions = {};
+}
+
+Piece_t Board::get_captured_piece(Move_t move)
+{
+    Square_t target_square = Move::get_target_square(move);
+    if (Move::get_flag(move) == Move::EN_PASSANT_FLAG)
+    {
+        Square_t capture_square =
+            get_en_passant_capture_square(Move::get_start_square(move), target_square);
+        return pieces[capture_square];
+    }
+    return pieces[target_square];
 }

@@ -40,6 +40,11 @@ std::vector<Move_t> MoveGenerator::get_moves()
     return moves;
 }
 
+bool MoveGenerator::is_check()
+{
+    return checking_piece_bb != 0;
+}
+
 int MoveGenerator::perft(int depth)
 {
     if (depth == 0)
@@ -83,9 +88,7 @@ void MoveGenerator::init_bitboards()
         }
     }
 
-    Bitboard::clear_all(checking_piece_bb);
-    is_double_check = false;
-    attacked_squares_bb = get_attacked_squares_and_update_checks();
+    update_attacks();
 
     Bitboard::clear_all(pinned_pieces_bb);
     Bitboard::set_all(blocking_squares_bb);
@@ -258,28 +261,31 @@ std::vector<Move_t> MoveGenerator::get_king_moves(Square_t square, Color_t color
     return moves;
 }
 
-Bitboard_t MoveGenerator::get_attacked_squares_and_update_checks()
+void MoveGenerator::update_attacks()
 {
-    Bitboard_t attacked_squares = 0;
+    Bitboard::clear_all(attacked_squares_bb);
+    Bitboard::clear_all(checking_piece_bb);
+    is_double_check = false;
+
     Bitboard_t attacking_pieces = enemy_pieces_bb;
     while (attacking_pieces != 0)
     {
-        Square_t square = Bitboard::pop_square(attacking_pieces);
-        Bitboard_t piece_attacks = get_piece_attacks(square);
+        Square_t attacker_square = Bitboard::pop_square(attacking_pieces);
+        Bitboard_t piece_attacks = get_piece_attacks(attacker_square);
+
         if ((piece_attacks & friendly_king_bb) != 0)
         {
             if (checking_piece_bb == 0)
             {
-                Bitboard::set_square(checking_piece_bb, square);
+                Bitboard::set_square(checking_piece_bb, attacker_square);
             }
             else
             {
                 is_double_check = true;
             }
         }
-        attacked_squares |= piece_attacks;
+        attacked_squares_bb |= piece_attacks;
     }
-    return attacked_squares;
 }
 
 Bitboard_t MoveGenerator::get_piece_attacks(Square_t square)

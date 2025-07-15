@@ -1,27 +1,12 @@
-#include <chrono>
-#include <iostream>
-
-#include "board.hpp"
-#include "move_generator.hpp"
+#include "bot.hpp"
 #include "precomputations.hpp"
-
 int main()
 {
-    auto board = Board();
     Precomputations::init_precomputations();
-    board.load_position_from_fen(
-        "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
-    auto move_generator = MoveGenerator(board);
 
-    auto start = std::chrono::high_resolution_clock::now();
-    int nodes = move_generator.calculate_nodes(5, true);
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-
-    std::cout << "Nodes: " << nodes << std::endl;
-    std::cout << "Time: " << duration.count() << " milliseconds" << std::endl;
-    std::cout << "Speed: " << nodes / duration.count() * 1000 << " N/s" << std::endl;
-
+    Bot bot;
+    bot.load_position("rnb1kbnr/1pp1pppp/p1qp4/8/P3P3/2N2N2/1PPP1PPP/R1BQKB1R w KQkq - 0 1");
+    Move_t best_move = bot.get_move(8);
     return 0;
 }
 

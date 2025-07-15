@@ -34,7 +34,7 @@ class Board
     PositionInfo_t position_info;
     std::stack<PositionInfo_t> previous_positions;
 
-    void load_position_from_fen(std::string fen);
+    void load_position(std::string fen);
 
     void print_board();
 
@@ -49,6 +49,8 @@ class Board
     void make_move(Move_t move);
 
     void unmake_move(Move_t move);
+
+    Piece_t get_captured_piece(Move_t move);
 
   private:
     // clang-format off
