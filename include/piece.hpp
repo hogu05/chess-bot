@@ -1,6 +1,8 @@
 #ifndef PIECE_H
 #define PIECE_H
 
+#include <string>
+
 #include "bit_utils.hpp"
 #include "types.hpp"
 
@@ -41,7 +43,7 @@ PieceType_t get_piece_type(Piece_t piece);
 
 Color_t get_piece_color(Piece_t piece);
 
-char get_piece_symbol(Piece_t piece);
+std::string get_piece_symbol(Piece_t piece, DisplayMode display_mode);
 
 Piece_t get_piece_from_symbol(char symbol);
 

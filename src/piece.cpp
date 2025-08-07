@@ -1,9 +1,11 @@
 #include "piece.hpp"
 
 #include <cctype>
+#include <string>
 
 #include "board.hpp"
 #include "directions.hpp"
+#include "types.hpp"
 
 PieceType_t Piece::get_piece_type(Piece_t piece)
 {
@@ -15,35 +17,50 @@ Color_t Piece::get_piece_color(Piece_t piece)
     return (piece & PIECE_COLOR_MASK) >> PIECE_COLOR_SHIFT;
 }
 
-char Piece::get_piece_symbol(Piece_t piece)
+std::string Piece::get_piece_symbol(Piece_t piece, DisplayMode display_mode)
 {
-    char piece_symbol;
-    switch (get_piece_type(piece))
-    {
-    case PAWN:
-        piece_symbol = 'p';
-        break;
-    case KNIGHT:
-        piece_symbol = 'n';
-        break;
-    case BISHOP:
-        piece_symbol = 'b';
-        break;
-    case ROOK:
-        piece_symbol = 'r';
-        break;
-    case QUEEN:
-        piece_symbol = 'q';
-        break;
-    case KING:
-        piece_symbol = 'k';
-        break;
-    default:
-        piece_symbol = '.';
-    }
+    bool isWhite = (get_piece_color(piece) == WHITE);
 
-    piece_symbol = get_piece_color(piece) == WHITE ? std::toupper(piece_symbol) : piece_symbol;
-    return piece_symbol;
+    if (display_mode == DisplayMode::UNICODE)
+    {
+        switch (get_piece_type(piece))
+        {
+        case PAWN:
+            return isWhite ? "♟" : "♙";
+        case KNIGHT:
+            return isWhite ? "♞" : "♘";
+        case BISHOP:
+            return isWhite ? "♝" : "♗";
+        case ROOK:
+            return isWhite ? "♜" : "♖";
+        case QUEEN:
+            return isWhite ? "♛" : "♕";
+        case KING:
+            return isWhite ? "♚" : "♔";
+        default:
+            return ".";
+        }
+    }
+    else
+    {
+        switch (get_piece_type(piece))
+        {
+        case PAWN:
+            return isWhite ? "P" : "p";
+        case KNIGHT:
+            return isWhite ? "N" : "n";
+        case BISHOP:
+            return isWhite ? "B" : "b";
+        case ROOK:
+            return isWhite ? "R" : "r";
+        case QUEEN:
+            return isWhite ? "Q" : "q";
+        case KING:
+            return isWhite ? "K" : "k";
+        default:
+            return ".";
+        }
+    }
 }
 
 Piece_t Piece::get_piece_from_symbol(char symbol)

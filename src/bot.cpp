@@ -1,23 +1,21 @@
 #include "bot.hpp"
 
 #include <algorithm>
-#include <iostream>
+#include <chrono>
+#include <functional>
+#include <thread>
 #include <unordered_map>
+#include <vector>
 
 #include "move.hpp"
 #include "piece.hpp"
 
-void Bot::load_position(std::string fen)
-{
-    board.load_position(std::move(fen));
-}
-
-Move_t Bot::get_move(int max_depth)
+void Bot::go(std::function<void(int, Move_t, int)> callback, bool& stop)
 {
     Move_t best_move;
     std::unordered_map<Move_t, int> root_move_scores;
 
-    for (int depth = 1; depth <= max_depth; depth++)
+    for (int depth = 1; !stop; depth++)
     {
         int best_score = -INF;
         std::vector<Move_t> root_moves = move_generator.get_moves();
@@ -28,7 +26,7 @@ Move_t Bot::get_move(int max_depth)
         for (Move_t move : root_moves)
         {
             board.make_move(move);
-            int score = -search(depth - 1, -INF, INF, false);
+            int score = -search(depth - 1, -INF, INF, false, stop);
             board.unmake_move(move);
 
             root_move_scores[move] = score;
@@ -40,15 +38,37 @@ Move_t Bot::get_move(int max_depth)
             }
         }
 
-        std::cout << "Depth " << depth << ": Best = " << Move::get_move_notation(best_move)
-                  << ", Eval = " << best_score << "\n";
+        if (!stop)
+        {
+            callback(depth, best_move, best_score);
+        }
     }
+}
 
+Move_t Bot::play(int thinking_time)
+{
+    Move_t best_move;
+    bool stop = false;
+
+    auto depth_callback = [this, &best_move](int depth, const Move_t& move, int eval)
+    { best_move = move; };
+
+    std::thread analysis_thread([this, &depth_callback, &stop] { go(depth_callback, stop); });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(thinking_time));
+
+    stop = true;
+    analysis_thread.join();
     return best_move;
 }
 
-int Bot::search(int depth, int alpha, int beta, bool is_quiescence)
+int Bot::search(int depth, int alpha, int beta, bool is_quiescence, bool& stop)
 {
+    if (stop)
+    {
+        return 0;
+    }
+
     if (depth == 0)
     {
         is_quiescence = true;
@@ -75,7 +95,7 @@ int Bot::search(int depth, int alpha, int beta, bool is_quiescence)
         }
 
         board.make_move(move);
-        int score = -search(depth - 1, -beta, -alpha, is_quiescence);
+        int score = -search(depth - 1, -beta, -alpha, is_quiescence, stop);
         board.unmake_move(move);
 
         found_move = true;
@@ -91,7 +111,7 @@ int Bot::search(int depth, int alpha, int beta, bool is_quiescence)
 
     if (!found_move)
     {
-        return move_generator.is_check() ? -MATE_SCORE : 0;
+        return move_generator.is_check() ? -MATE_SCORE - depth * 1000 : STALEMATE_SCORE;
     }
 
     return alpha;
@@ -115,9 +135,9 @@ int Bot::get_move_priority(Move_t move)
     return priority;
 }
 
-void Bot::order_moves(std::vector<Move_t> &moves)
+void Bot::order_moves(std::vector<Move_t>& moves)
 {
-    std::sort(moves.begin(), moves.end(), [this](const Move_t &move_1, const Move_t &move_2)
+    std::sort(moves.begin(), moves.end(), [this](const Move_t& move_1, const Move_t& move_2)
               { return get_move_priority(move_1) > get_move_priority(move_2); });
 }
 
@@ -125,4 +145,19 @@ bool Bot::is_noisy(Move_t move)
 {
     return board.get_captured_piece(move) != Piece::NONE ||
            Move::get_pawn_promotion_piece_type(move) != Piece::NONE;
+}
+
+Board& Bot::get_board()
+{
+    return board;
+}
+
+MoveGenerator& Bot::get_move_generator()
+{
+    return move_generator;
+}
+
+void Bot::load_position(std::string fen)
+{
+    board.load_position(std::move(fen));
 }

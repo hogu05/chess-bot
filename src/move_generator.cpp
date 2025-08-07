@@ -7,7 +7,7 @@
 #include "position_info.hpp"
 #include "precomputations.hpp"
 
-MoveGenerator::MoveGenerator(Board &board) : board(board)
+MoveGenerator::MoveGenerator(Board& board) : board(board)
 {
 }
 
@@ -43,6 +43,18 @@ std::vector<Move_t> MoveGenerator::get_moves()
 bool MoveGenerator::is_check()
 {
     return checking_piece_bb != 0;
+}
+
+bool MoveGenerator::is_checkmate()
+{
+    std::vector<Move_t> moves = get_moves();
+    return moves.empty() && is_check();
+}
+
+bool MoveGenerator::is_stalemate()
+{
+    std::vector<Move_t> moves = get_moves();
+    return moves.empty() && !is_check();
 }
 
 int MoveGenerator::perft(int depth)
@@ -174,10 +186,10 @@ std::vector<Move_t> MoveGenerator::get_pawn_promotion_moves(std::vector<Move_t> 
     std::vector<Move_t> promotion_moves;
     for (Move_t move : moves)
     {
-        promotion_moves.push_back(Move::create_move(move, Move::PROMOTE_TO_KNIGHT_FLAG));
-        promotion_moves.push_back(Move::create_move(move, Move::PROMOTE_TO_BISHOP_FLAG));
-        promotion_moves.push_back(Move::create_move(move, Move::PROMOTE_TO_ROOK_FLAG));
         promotion_moves.push_back(Move::create_move(move, Move::PROMOTE_TO_QUEEN_FLAG));
+        promotion_moves.push_back(Move::create_move(move, Move::PROMOTE_TO_ROOK_FLAG));
+        promotion_moves.push_back(Move::create_move(move, Move::PROMOTE_TO_BISHOP_FLAG));
+        promotion_moves.push_back(Move::create_move(move, Move::PROMOTE_TO_KNIGHT_FLAG));
     }
     return promotion_moves;
 }

@@ -20,6 +20,7 @@ set(CHESS_SOURCES
 
 add_executable(chess-bot
     src/main.cpp
+    src/repl.cpp
     ${CHESS_SOURCES}
 )
 

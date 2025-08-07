@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "bit_utils.hpp"
+#include "move_generator.hpp"
 #include "types.hpp"
 
 namespace Move
@@ -29,6 +30,8 @@ constexpr int PROMOTE_TO_BISHOP_FLAG = 0b101;
 constexpr int PROMOTE_TO_ROOK_FLAG = 0b110;
 constexpr int PROMOTE_TO_QUEEN_FLAG = 0b111;
 
+constexpr Move_t NONE_MOVE = 0;
+
 Move_t create_move(Square_t start_square, Square_t target_square, int flag);
 
 Move_t create_move(Move_t move, int flag);
@@ -46,6 +49,8 @@ bool is_pawn_promotion(Move_t move);
 PieceType_t get_pawn_promotion_piece_type(Move_t move);
 
 std::string get_move_notation(Move_t move);
+
+Move_t get_move_from_notation(std::string notation, MoveGenerator& move_generator);
 }; // namespace Move
 
 #endif

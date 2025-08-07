@@ -2,6 +2,7 @@
 
 #include "bitboard.hpp"
 #include "board.hpp"
+#include "move_generator.hpp"
 #include "piece.hpp"
 
 Move_t Move::create_move(Square_t start_square, Square_t target_square, int flag)
@@ -73,4 +74,16 @@ std::string Move::get_move_notation(Move_t move)
     notation += Board::get_square_notation(get_start_square(move));
     notation += Board::get_square_notation(get_target_square(move));
     return notation;
+}
+
+Move_t Move::get_move_from_notation(std::string notation, MoveGenerator& move_generator)
+{
+    for (Move_t move : move_generator.get_moves())
+    {
+        if (get_move_notation(move) == notation)
+        {
+            return move;
+        }
+    }
+    return NONE_MOVE;
 }

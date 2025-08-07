@@ -5,17 +5,17 @@
 
 #include "types.hpp"
 
-void Bitboard::set_square(Bitboard_t &bitboard, Square_t square)
+void Bitboard::set_square(Bitboard_t& bitboard, Square_t square)
 {
     bitboard |= (1ULL << square);
 }
 
-void Bitboard::clear_square(Bitboard_t &bitboard, Square_t square)
+void Bitboard::clear_square(Bitboard_t& bitboard, Square_t square)
 {
     bitboard &= ~(1ULL << square);
 }
 
-Square_t Bitboard::pop_square(Bitboard_t &bitboard)
+Square_t Bitboard::pop_square(Bitboard_t& bitboard)
 {
     Square_t square = __builtin_ctzll(bitboard);
     clear_square(bitboard, square);
@@ -38,12 +38,12 @@ bool Bitboard::is_clear(Bitboard_t bitboard, Square_t square)
     return (bitboard & (1ULL << square)) == 0;
 }
 
-void Bitboard::clear_all(Bitboard_t &bitboard)
+void Bitboard::clear_all(Bitboard_t& bitboard)
 {
     bitboard = 0;
 }
 
-void Bitboard::set_all(Bitboard_t &bitboard)
+void Bitboard::set_all(Bitboard_t& bitboard)
 {
     bitboard = 0xFFFFFFFFFFFFFFFF;
 }

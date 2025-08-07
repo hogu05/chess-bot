@@ -13,6 +13,8 @@ class Board
     static constexpr int FILES = 8;
     static constexpr int RANKS = 8;
     static constexpr int COLORS = 2;
+    static constexpr char STARTING_POSITION_FEN[] =
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     static constexpr int TOTAL_SQUARES = FILES * RANKS;
 
@@ -36,8 +38,6 @@ class Board
 
     void load_position(std::string fen);
 
-    void print_board();
-
     bool is_occupied(Square_t square);
 
     bool is_empty(Square_t square);
@@ -51,6 +51,8 @@ class Board
     void unmake_move(Move_t move);
 
     Piece_t get_captured_piece(Move_t move);
+
+    std::string to_string(DisplayMode display_mode);
 
   private:
     // clang-format off

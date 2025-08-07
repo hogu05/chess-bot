@@ -10,16 +10,20 @@ class Board;
 class MoveGenerator
 {
   public:
-    explicit MoveGenerator(Board &board);
+    explicit MoveGenerator(Board& board);
 
     std::vector<Move_t> get_moves();
 
     bool is_check();
 
+    bool is_checkmate();
+
+    bool is_stalemate();
+
     int perft(int depth);
 
   private:
-    Board &board;
+    Board& board;
 
     Bitboard_t friendly_pieces_bb;
     Bitboard_t enemy_pieces_bb;

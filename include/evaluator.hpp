@@ -6,11 +6,11 @@
 class Evaluator
 {
   public:
-    explicit Evaluator(Board &board);
+    explicit Evaluator(Board& board);
     int get_evaluation();
 
   private:
-    Board &board;
+    Board& board;
 };
 
 #endif

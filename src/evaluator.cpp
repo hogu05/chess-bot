@@ -4,7 +4,7 @@
 #include "position_info.hpp"
 #include "types.hpp"
 
-Evaluator::Evaluator(Board &board) : board(board)
+Evaluator::Evaluator(Board& board) : board(board)
 {
 }
 

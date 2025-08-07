@@ -30,18 +30,18 @@ constexpr int CASTLING_RIGHTS_SHIFT = SHORT_CASTLE_WHITE_SHIFT;
 constexpr int CASTLING_RIGHTS_MASK = SHORT_CASTLE_WHITE_MASK | SHORT_CASTLE_BLACK_MASK |
                                      LONG_CASTLE_WHITE_MASK | LONG_CASTLE_BLACK_MASK;
 
-void set_to_move(PositionInfo_t &position_info, Color_t to_move);
+void set_to_move(PositionInfo_t& position_info, Color_t to_move);
 
-void set_captured_piece(PositionInfo_t &position_info, Piece_t captured_piece);
+void set_captured_piece(PositionInfo_t& position_info, Piece_t captured_piece);
 
-void set_en_passant(PositionInfo_t &position_info, bool en_passant_flag, int en_passant_file);
+void set_en_passant(PositionInfo_t& position_info, bool en_passant_flag, int en_passant_file);
 
-void set_castling_right(PositionInfo_t &position_info, Color_t color, bool short_castle,
+void set_castling_right(PositionInfo_t& position_info, Color_t color, bool short_castle,
                         bool castling_right);
 
-void set_castling_rights(PositionInfo_t &position_info, int castling_rights);
+void set_castling_rights(PositionInfo_t& position_info, int castling_rights);
 
-void set_fifty_move_ply(PositionInfo_t &position_info, int fifty_move_ply);
+void set_fifty_move_ply(PositionInfo_t& position_info, int fifty_move_ply);
 
 Color_t get_to_move(PositionInfo_t position_info);
 

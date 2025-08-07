@@ -110,7 +110,6 @@ void Board::load_position(std::string fen)
     if (fen_info[1] == "b")
     {
         PositionInfo::set_to_move(position_info, Piece::BLACK);
-        std::cout << position_info << std::endl;
     }
 
     // Getting castling rights
@@ -155,22 +154,6 @@ void Board::load_position(std::string fen)
     }
 
     previous_positions.push(position_info);
-}
-
-void Board::print_board()
-{
-    Square_t square = 56;
-    while (square >= 0)
-    {
-        std::cout << Piece::get_piece_symbol(pieces[square]) << " ";
-        square++;
-        if (square % 8 == 0)
-        {
-            std::cout << std::endl;
-            square -= 16;
-        }
-    }
-    std::cout << std::endl;
 }
 
 bool Board::is_occupied(Square_t square)
@@ -283,10 +266,6 @@ void Board::make_move(Move_t move)
             PositionInfo::set_castling_right(new_position_info, next_move_color, false, false);
         }
     }
-
-    // TODO: fifty move rule
-    // TODO: threefold
-
     previous_positions.push(position_info);
     position_info = new_position_info;
 }
@@ -335,10 +314,6 @@ void Board::unmake_move(Move_t move)
             move_piece(start_square - 1, start_square - 4); // Moves rook
         }
     }
-
-    // TODO: fifty move rule
-    // TODO: threefold
-
     position_info = previous_position_info;
 }
 
@@ -359,4 +334,35 @@ Piece_t Board::get_captured_piece(Move_t move)
         return pieces[capture_square];
     }
     return pieces[target_square];
+}
+
+std::string Board::to_string(DisplayMode display_mode)
+{
+    std::ostringstream board_str;
+
+    board_str << std::string(2, ' ') << '+' << std::string(17, '-') << '+' << std::endl;
+
+    for (int rank = RANKS - 1; rank >= 0; rank--)
+    {
+        board_str << rank + 1 << " | ";
+        for (int file = 0; file < FILES; file++)
+        {
+            Square_t square = get_square(file, rank);
+            board_str << Piece::get_piece_symbol(pieces[square], display_mode) << " ";
+        }
+        board_str << '|' << std::endl;
+    }
+
+    board_str << std::string(2, ' ') << '+' << std::string(17, '-') << '+' << std::endl;
+
+    board_str << (PositionInfo::get_to_move(position_info) == Piece::WHITE ? 'W' : 'B');
+
+    board_str << std::string(3, ' ');
+
+    for (int file = 0; file < FILES; file++)
+    {
+        board_str << get_file_notation(file) << ' ';
+    }
+
+    return board_str.str();
 }

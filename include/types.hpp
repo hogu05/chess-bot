@@ -12,4 +12,10 @@ using PositionInfo_t = int;
 using Color_t = int;
 using PieceType_t = int;
 
+enum class DisplayMode
+{
+    LETTERS,
+    UNICODE
+};
+
 #endif
