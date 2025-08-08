@@ -5,18 +5,12 @@
 #include "directions.hpp"
 #include "piece.hpp"
 
-void Precomputations::init_precomputations()
+namespace Precomputations
 {
-    calculate_squares_to_edge();
-    calculate_pawn_attacks();
-    calculate_knight_moves();
-    calculate_king_moves();
-}
-
 std::array<std::array<int, Directions::sliding_directions.size()>, Board::TOTAL_SQUARES>
-    Precomputations::squares_to_edge;
+    squares_to_edge;
 
-void Precomputations::calculate_squares_to_edge()
+void calculate_squares_to_edge()
 {
     for (int rank = 0; rank < Board::RANKS; rank++)
     {
@@ -42,15 +36,14 @@ void Precomputations::calculate_squares_to_edge()
     }
 }
 
-int Precomputations::get_squares_to_edge(Square_t square, Direction_t direction)
+int get_squares_to_edge(Square_t square, Direction_t direction)
 {
     return squares_to_edge[square][Directions::get_direction_index(direction)];
 }
 
-std::array<std::array<Bitboard_t, Board::TOTAL_SQUARES>, Board::COLORS>
-    Precomputations::pawn_attacks;
+std::array<std::array<Bitboard_t, Board::TOTAL_SQUARES>, Board::COLORS> pawn_attacks;
 
-void Precomputations::calculate_pawn_attacks()
+void calculate_pawn_attacks()
 {
     for (Square_t square = 0; square < Board::TOTAL_SQUARES; square++)
     {
@@ -71,9 +64,9 @@ void Precomputations::calculate_pawn_attacks()
     }
 }
 
-std::array<Bitboard_t, Board::TOTAL_SQUARES> Precomputations::knight_moves;
+std::array<Bitboard_t, Board::TOTAL_SQUARES> knight_moves;
 
-void Precomputations::calculate_knight_moves()
+void calculate_knight_moves()
 {
     for (Square_t square = 0; square < Board::TOTAL_SQUARES; square++)
     {
@@ -104,9 +97,9 @@ void Precomputations::calculate_knight_moves()
     }
 }
 
-std::array<Bitboard_t, Board::TOTAL_SQUARES> Precomputations::king_moves;
+std::array<Bitboard_t, Board::TOTAL_SQUARES> king_moves;
 
-void Precomputations::calculate_king_moves()
+void calculate_king_moves()
 {
     for (Square_t square = 0; square < Board::TOTAL_SQUARES; square++)
     {
@@ -122,3 +115,12 @@ void Precomputations::calculate_king_moves()
         king_moves[square] = moves;
     }
 }
+
+void init_precomputations()
+{
+    calculate_squares_to_edge();
+    calculate_pawn_attacks();
+    calculate_knight_moves();
+    calculate_king_moves();
+}
+} // namespace Precomputations

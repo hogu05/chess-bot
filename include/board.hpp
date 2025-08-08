@@ -4,6 +4,7 @@
 #include <array>
 #include <stack>
 #include <string>
+#include <unordered_map>
 
 #include "types.hpp"
 
@@ -32,9 +33,8 @@ class Board
 
     static Square_t get_en_passant_capture_square(Square_t start_square, Square_t target_square);
 
-    std::array<Piece_t, FILES * RANKS> pieces;
-    PositionInfo_t position_info;
-    std::stack<PositionInfo_t> previous_positions;
+    const std::array<Piece_t, TOTAL_SQUARES>& get_pieces();
+    PositionInfo_t get_position_info();
 
     void load_position(std::string fen);
 
@@ -53,6 +53,8 @@ class Board
     Piece_t get_captured_piece(Move_t move);
 
     std::string to_string(DisplayMode display_mode);
+
+    bool is_threefold_repetition();
 
   private:
     // clang-format off
@@ -78,9 +80,19 @@ class Board
 
     static Square_t get_square_from_notation(std::string notation);
 
+
+    std::array<Piece_t, TOTAL_SQUARES> pieces;
+    PositionInfo_t position_info;
+    std::stack<PositionInfo_t> previous_positions;
+    std::stack<uint64_t> previous_hashes;
+    std::unordered_map<uint64_t, int> hash_count;
+    uint64_t hash;
+
     void move_piece(Square_t start_square, Square_t target_square);
 
     void reset();
+
+    uint64_t get_position_hash();
 };
 
 #endif

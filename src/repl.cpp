@@ -10,7 +10,6 @@
 #include "move.hpp"
 #include "piece.hpp"
 #include "position_info.hpp"
-#include "precomputations.hpp"
 #include "types.hpp"
 
 std::vector<std::string> Repl::split_args(std::string args_string)
@@ -35,7 +34,7 @@ std::string Repl::join_args(std::vector<std::string>& args)
 
 void Repl::handle_command(std::string command, std::vector<std::string> args)
 {
-    if (state == State::IDLE)
+    if (mode == Mode::IDLE)
     {
         if (command == "load")
         {
@@ -69,13 +68,13 @@ void Repl::handle_command(std::string command, std::vector<std::string> args)
 
         if (command == "go")
         {
-            state = State::ANALYSING;
+            mode = Mode::ANALYSE;
             stop_analysis = false;
             std::function<void(int, Move_t, int)> callback =
                 [this](int depth, Move_t best_move, int evaluation)
             {
-                info_line = "Evaluation: " + std::to_string(evaluation / 100) + " | " +
-                            "Best move: " + Move::get_move_notation(best_move) + " | " +
+                info_line = "Evaluation: " + std::to_string(static_cast<float>(evaluation) / 100) +
+                            " | " + "Best move: " + Move::get_move_notation(best_move) + " | " +
                             "Depth: " + std::to_string(depth);
 
                 std::cout << "\033[s"
@@ -86,7 +85,7 @@ void Repl::handle_command(std::string command, std::vector<std::string> args)
 
             stop_analysis = false;
             old_board_string = bot.get_board().to_string(display_mode);
-            info_line = "Analysis startig";
+            info_line = "Analysis starting";
             analysis_thread = std::thread([this, callback]() { bot.go(callback, stop_analysis); });
             analysis_thread.detach();
             return;
@@ -99,7 +98,7 @@ void Repl::handle_command(std::string command, std::vector<std::string> args)
             {
                 thinking_time = std::stoi(args[0]);
             }
-            state = State::PLAYING;
+            mode = Mode::PLAY;
 
             make_bot_move();
             return;
@@ -108,12 +107,12 @@ void Repl::handle_command(std::string command, std::vector<std::string> args)
 
     if (command == "quit")
     {
-        if (state == State::ANALYSING)
+        if (mode == Mode::ANALYSE)
         {
             stop_analysis = true;
         }
 
-        state = State::FINISHED;
+        mode = Mode::FINISHED;
         return;
     }
 
@@ -145,27 +144,27 @@ void Repl::handle_command(std::string command, std::vector<std::string> args)
 
     if (command == "stop")
     {
-        if (state == State::ANALYSING)
+        if (mode == Mode::ANALYSE)
         {
             stop_analysis = true;
             info_line = "Analysis stopped";
         }
 
-        if (state == State::PLAYING)
+        if (mode == Mode::PLAY)
         {
             info_line = "Game stopped";
         }
 
-        if (state != State::IDLE)
+        if (mode != Mode::IDLE)
         {
-            state = State::IDLE;
+            mode = Mode::IDLE;
             return;
         }
     }
 
     if (command == "help")
     {
-        if (state == State::IDLE)
+        if (mode == Mode::IDLE)
         {
             info_line =
                 "load <FEN>         - Load a position from FEN (default: starting position)\n";
@@ -180,14 +179,14 @@ void Repl::handle_command(std::string command, std::vector<std::string> args)
             info_line += "help               - Show commands for the current mode";
         }
 
-        if (state == State::PLAYING)
+        if (mode == Mode::PLAY)
         {
             info_line =
                 "<notation>         - Make a move using standard algebraic notation (e.g., e2e4)\n";
             info_line += "stop               - Stop the game";
         }
 
-        if (state == State::ANALYSING)
+        if (mode == Mode::ANALYSE)
         {
             info_line = "stop               - Stop the analysis";
         }
@@ -195,7 +194,7 @@ void Repl::handle_command(std::string command, std::vector<std::string> args)
         return;
     }
 
-    if (state == State::PLAYING)
+    if (mode == Mode::PLAY)
     {
         std::string move_notation = command;
         Move_t move = Move::get_move_from_notation(move_notation, bot.get_move_generator());
@@ -211,7 +210,7 @@ void Repl::handle_command(std::string command, std::vector<std::string> args)
         return;
     }
 
-    if (state == State::IDLE)
+    if (mode == Mode::IDLE)
     {
 
         info_line = "Unknown command: " + command;
@@ -220,7 +219,6 @@ void Repl::handle_command(std::string command, std::vector<std::string> args)
 
 void Repl::run()
 {
-    Precomputations::init_precomputations();
     bot.load_position(Board::STARTING_POSITION_FEN);
     info_line = "Welcome to the Chess Bot, type 'help' for a list of commands";
 
@@ -242,7 +240,7 @@ void Repl::run()
 
         handle_command(command, args);
 
-        if (state == State::FINISHED)
+        if (mode == Mode::FINISHED)
         {
             break;
         }
@@ -256,7 +254,7 @@ void Repl::clear_screen()
 
 void Repl::print_board()
 {
-    if (state == State::ANALYSING)
+    if (mode == Mode::ANALYSE)
     {
         std::cout << old_board_string;
     }
@@ -264,7 +262,7 @@ void Repl::print_board()
     {
         std::cout << bot.get_board().to_string(display_mode);
     }
-    std::cout << std::string(2, ' ') << get_state_symbol();
+    std::cout << std::string(2, ' ') << get_mode_symbol();
 }
 
 void Repl::update_screen()
@@ -297,7 +295,7 @@ bool Repl::is_game_over()
     bool is_game_over = false;
     if (bot.get_move_generator().is_checkmate())
     {
-        Move_t loser_color = PositionInfo::get_to_move(bot.get_board().position_info);
+        Move_t loser_color = PositionInfo::get_to_move(bot.get_board().get_position_info());
         info_line = "Checkmate, ";
         info_line += (loser_color == Piece::WHITE ? "black" : "white");
         info_line += " has won the game";
@@ -307,28 +305,33 @@ bool Repl::is_game_over()
     if (bot.get_move_generator().is_stalemate())
     {
         info_line = "Stalemate, the game is a draw";
-        state = State::IDLE;
+        is_game_over = true;
+    }
+
+    if (bot.get_board().is_threefold_repetition())
+    {
+        info_line = "Threefold repetition, the game is a draw";
         is_game_over = true;
     }
 
     if (is_game_over)
     {
-        state = State::IDLE;
+        mode = Mode::IDLE;
         update_screen();
     }
 
     return is_game_over;
 }
 
-std::string Repl::get_state_symbol()
+std::string Repl::get_mode_symbol()
 {
-    switch (state)
+    switch (mode)
     {
-    case State::IDLE:
+    case Mode::IDLE:
         return "I";
-    case State::ANALYSING:
+    case Mode::ANALYSE:
         return "A";
-    case State::PLAYING:
+    case Mode::PLAY:
         return "P";
     default:
         return "";

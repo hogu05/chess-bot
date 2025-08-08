@@ -22,6 +22,7 @@ class Bot
   private:
     static constexpr int MATE_SCORE = 100000;
     static constexpr int STALEMATE_SCORE = 0;
+    static constexpr int THREEFOLD_REPETITION_SCORE = 0;
     static constexpr int INF = 1000000;
 
     Board board;

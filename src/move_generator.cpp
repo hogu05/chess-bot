@@ -14,8 +14,8 @@ MoveGenerator::MoveGenerator(Board& board) : board(board)
 std::vector<Move_t> MoveGenerator::get_moves()
 {
     en_passant_square =
-        Board::get_en_passant_square(PositionInfo::get_en_passant_file(board.position_info),
-                                     PositionInfo::get_to_move(board.position_info));
+        Board::get_en_passant_square(PositionInfo::get_en_passant_file(board.get_position_info()),
+                                     PositionInfo::get_to_move(board.get_position_info()));
     init_bitboards();
     std::vector<Move_t> moves;
     if (!is_double_check)
@@ -85,7 +85,8 @@ void MoveGenerator::init_bitboards()
         if (board.is_occupied(square))
         {
             Bitboard::set_square(all_pieces_bb, square);
-            if (board.get_piece_color(square) == PositionInfo::get_to_move(board.position_info))
+            if (board.get_piece_color(square) ==
+                PositionInfo::get_to_move(board.get_position_info()))
             {
                 Bitboard::set_square(friendly_pieces_bb, square);
                 if (board.get_piece_type(square) == Piece::KING)
@@ -246,7 +247,7 @@ std::vector<Move_t> MoveGenerator::get_king_moves(Square_t square, Color_t color
 
     if (checking_piece_bb == 0)
     {
-        if (PositionInfo::get_castling_right(board.position_info, color, true) &&
+        if (PositionInfo::get_castling_right(board.get_position_info(), color, true) &&
             Bitboard::is_clear(all_pieces_bb, square + 1) &&
             Bitboard::is_clear(all_pieces_bb, square + 2))
         {
@@ -257,7 +258,7 @@ std::vector<Move_t> MoveGenerator::get_king_moves(Square_t square, Color_t color
             }
         }
 
-        if (PositionInfo::get_castling_right(board.position_info, color, false) &&
+        if (PositionInfo::get_castling_right(board.get_position_info(), color, false) &&
             Bitboard::is_clear(all_pieces_bb, square - 1) &&
             Bitboard::is_clear(all_pieces_bb, square - 2) &&
             Bitboard::is_clear(all_pieces_bb, square - 3))

@@ -5,7 +5,9 @@
 #include "move_generator.hpp"
 #include "piece.hpp"
 
-Move_t Move::create_move(Square_t start_square, Square_t target_square, int flag)
+namespace Move
+{
+Move_t create_move(Square_t start_square, Square_t target_square, int flag)
 {
     Move_t move = 0;
     move = move | (start_square << START_SQUARE_SHIFT);
@@ -14,14 +16,14 @@ Move_t Move::create_move(Square_t start_square, Square_t target_square, int flag
     return move;
 }
 
-Move_t Move::create_move(Move_t move, int flag)
+Move_t create_move(Move_t move, int flag)
 {
     move &= ~FLAG_MASK;
     move |= (flag << FLAG_SHIFT);
     return move;
 }
 
-std::vector<Move_t> Move::create_moves_from_bitboard(Square_t start_square, Bitboard_t bitboard)
+std::vector<Move_t> create_moves_from_bitboard(Square_t start_square, Bitboard_t bitboard)
 {
     std::vector<Move_t> moves;
     while (bitboard != 0)
@@ -32,27 +34,27 @@ std::vector<Move_t> Move::create_moves_from_bitboard(Square_t start_square, Bitb
     return moves;
 }
 
-Square_t Move::get_start_square(Move_t move)
+Square_t get_start_square(Move_t move)
 {
     return (move & START_SQUARE_MASK) >> START_SQUARE_SHIFT;
 }
 
-Square_t Move::get_target_square(Move_t move)
+Square_t get_target_square(Move_t move)
 {
     return (move & TARGET_SQUARE_MASK) >> TARGET_SQUARE_SHIFT;
 }
 
-int Move::get_flag(Move_t move)
+int get_flag(Move_t move)
 {
     return (move & FLAG_MASK) >> FLAG_SHIFT;
 }
 
-bool Move::is_pawn_promotion(Move_t move)
+bool is_pawn_promotion(Move_t move)
 {
     return (move & PAWN_PROMOTION_MASK) != 0;
 }
 
-PieceType_t Move::get_pawn_promotion_piece_type(Move_t move)
+PieceType_t get_pawn_promotion_piece_type(Move_t move)
 {
     switch (get_flag(move))
     {
@@ -63,12 +65,13 @@ PieceType_t Move::get_pawn_promotion_piece_type(Move_t move)
     case PROMOTE_TO_ROOK_FLAG:
         return Piece::ROOK;
     case PROMOTE_TO_QUEEN_FLAG:
-    default:
         return Piece::QUEEN;
+    default:
+        return Piece::NONE;
     }
 }
 
-std::string Move::get_move_notation(Move_t move)
+std::string get_move_notation(Move_t move)
 {
     std::string notation;
     notation += Board::get_square_notation(get_start_square(move));
@@ -76,7 +79,7 @@ std::string Move::get_move_notation(Move_t move)
     return notation;
 }
 
-Move_t Move::get_move_from_notation(std::string notation, MoveGenerator& move_generator)
+Move_t get_move_from_notation(std::string notation, MoveGenerator& move_generator)
 {
     for (Move_t move : move_generator.get_moves())
     {
@@ -87,3 +90,4 @@ Move_t Move::get_move_from_notation(std::string notation, MoveGenerator& move_ge
     }
     return NONE_MOVE;
 }
+} // namespace Move

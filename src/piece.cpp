@@ -7,17 +7,19 @@
 #include "directions.hpp"
 #include "types.hpp"
 
-PieceType_t Piece::get_piece_type(Piece_t piece)
+namespace Piece
+{
+PieceType_t get_piece_type(Piece_t piece)
 {
     return (piece & PIECE_TYPE_MASK) >> PIECE_TYPE_SHIFT;
 }
 
-Color_t Piece::get_piece_color(Piece_t piece)
+Color_t get_piece_color(Piece_t piece)
 {
     return (piece & PIECE_COLOR_MASK) >> PIECE_COLOR_SHIFT;
 }
 
-std::string Piece::get_piece_symbol(Piece_t piece, DisplayMode display_mode)
+std::string get_piece_symbol(Piece_t piece, DisplayMode display_mode)
 {
     bool isWhite = (get_piece_color(piece) == WHITE);
 
@@ -63,7 +65,7 @@ std::string Piece::get_piece_symbol(Piece_t piece, DisplayMode display_mode)
     }
 }
 
-Piece_t Piece::get_piece_from_symbol(char symbol)
+Piece_t get_piece_from_symbol(char symbol)
 {
     PieceType_t piece_type;
     switch (tolower(symbol))
@@ -95,17 +97,17 @@ Piece_t Piece::get_piece_from_symbol(char symbol)
     return create_piece(piece_type, piece_color);
 }
 
-Color_t Piece::get_other_color(Color_t color)
+Color_t get_other_color(Color_t color)
 {
     return color == WHITE ? BLACK : WHITE;
 }
 
-Piece_t Piece::create_piece(PieceType_t type, Color_t color)
+Piece_t create_piece(PieceType_t type, Color_t color)
 {
     return (color << PIECE_COLOR_SHIFT) | (type << PIECE_TYPE_SHIFT);
 }
 
-bool Piece::can_pawn_move_two_spaces(Square_t square, Color_t color)
+bool can_pawn_move_two_spaces(Square_t square, Color_t color)
 {
     int rank = Board::get_rank(square);
     if ((color == WHITE && rank == 1) || (color == BLACK && rank == Board::RANKS - 2))
@@ -115,7 +117,7 @@ bool Piece::can_pawn_move_two_spaces(Square_t square, Color_t color)
     return false;
 }
 
-bool Piece::can_pawn_promote(Square_t square, Color_t color)
+bool can_pawn_promote(Square_t square, Color_t color)
 {
     int rank = Board::get_rank(square);
     if ((color == WHITE && rank == Board::RANKS - 2) || (color == BLACK && rank == 1))
@@ -125,7 +127,7 @@ bool Piece::can_pawn_promote(Square_t square, Color_t color)
     return false;
 }
 
-bool Piece::can_move_in_direction(PieceType_t piece_type, Direction_t direction)
+bool can_move_in_direction(PieceType_t piece_type, Direction_t direction)
 {
     if ((piece_type == BISHOP || piece_type == QUEEN) &&
         Directions::is_diagonal_direction(direction))
@@ -140,7 +142,7 @@ bool Piece::can_move_in_direction(PieceType_t piece_type, Direction_t direction)
     return false;
 }
 
-bool Piece::is_sliding_piece(PieceType_t piece_type)
+bool is_sliding_piece(PieceType_t piece_type)
 {
     if (piece_type == BISHOP || piece_type == ROOK || piece_type == QUEEN)
     {
@@ -149,7 +151,7 @@ bool Piece::is_sliding_piece(PieceType_t piece_type)
     return false;
 }
 
-int Piece::get_piece_value(PieceType_t piece)
+int get_piece_value(PieceType_t piece)
 {
     switch (piece)
     {
@@ -167,3 +169,21 @@ int Piece::get_piece_value(PieceType_t piece)
         return 0;
     }
 }
+
+int get_piece_index(Piece_t piece)
+{
+    PieceType_t piece_type = get_piece_type(piece);
+
+    if (piece_type == NONE)
+    {
+        return -1;
+    }
+
+    int index = piece_type - 1;
+    if (get_piece_color(piece) == BLACK)
+    {
+        index += PIECE_TYPE_COUNT;
+    }
+    return index;
+}
+} // namespace Piece

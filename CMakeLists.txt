@@ -16,6 +16,8 @@ set(CHESS_SOURCES
     src/bitboard.cpp
     src/position_info.cpp
     src/evaluator.cpp
+    src/piece_square_tables.cpp
+    src/hasher.cpp
 )
 
 add_executable(chess-bot

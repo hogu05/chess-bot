@@ -22,6 +22,7 @@ constexpr PieceType_t BISHOP = 0b011;
 constexpr PieceType_t ROOK = 0b100;
 constexpr PieceType_t QUEEN = 0b101;
 constexpr PieceType_t KING = 0b110;
+constexpr int PIECE_TYPE_COUNT = 6;
 
 constexpr Color_t WHITE = 0;
 constexpr Color_t BLACK = 1;
@@ -60,6 +61,8 @@ bool can_move_in_direction(Piece_t piece, Direction_t direction);
 bool is_sliding_piece(Piece_t piece);
 
 int get_piece_value(PieceType_t piece);
+
+int get_piece_index(Piece_t piece);
 }; // namespace Piece
 
 #endif

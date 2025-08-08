@@ -13,17 +13,17 @@ class Repl
     void run();
 
   private:
-    enum class State
+    enum class Mode
     {
         IDLE,
-        PLAYING,
-        ANALYSING,
+        PLAY,
+        ANALYSE,
         FINISHED
     };
 
     DisplayMode display_mode = DisplayMode::LETTERS;
     std::string info_line = "";
-    State state = State::IDLE;
+    Mode mode = Mode::IDLE;
     Bot bot;
     bool stop_analysis = false;
     std::thread analysis_thread;
@@ -38,7 +38,7 @@ class Repl
     void update_screen();
     void make_bot_move();
     bool is_game_over();
-    std::string get_state_symbol();
+    std::string get_mode_symbol();
 };
 
 #endif

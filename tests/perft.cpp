@@ -37,7 +37,7 @@ std::vector<TestResult> run_tests(std::vector<TestCase> tests)
 
     for (int i = 0; i < tests.size(); i++)
     {
-        TestCase &test = tests[i];
+        TestCase& test = tests[i];
 
         board.load_position(test.fen);
 
@@ -57,7 +57,7 @@ std::vector<TestResult> run_tests(std::vector<TestCase> tests)
 bool all_passed(std::vector<TestResult> results)
 {
     return std::all_of(results.begin(), results.end(),
-                       [](const TestResult &result) { return result.passed; });
+                       [](TestResult& result) { return result.passed; });
 }
 
 void print_results(std::vector<TestResult> results)
@@ -74,7 +74,7 @@ void print_results(std::vector<TestResult> results)
     std::uint64_t total_nodes = 0;
     std::uint64_t total_time = 0;
 
-    for (const TestResult &result : results)
+    for (TestResult& result : results)
     {
         total_nodes += result.actual_nodes;
         total_time += result.time;

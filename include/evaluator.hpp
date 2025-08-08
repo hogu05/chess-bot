@@ -11,6 +11,7 @@ class Evaluator
 
   private:
     Board& board;
+    static constexpr int ENDGAME_MATERIAL_LIMIT = 4000;
 };
 
 #endif

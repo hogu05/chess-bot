@@ -4,6 +4,7 @@
 #include <sstream>
 #include <string>
 
+#include "hasher.hpp"
 #include "move.hpp"
 #include "piece.hpp"
 #include "position_info.hpp"
@@ -97,6 +98,7 @@ void Board::load_position(std::string fen)
         else
         {
             pieces[square] = Piece::get_piece_from_symbol(current_char);
+            Hasher::update_square(hash, square, pieces[square]);
             square++;
         }
     }
@@ -154,6 +156,11 @@ void Board::load_position(std::string fen)
     }
 
     previous_positions.push(position_info);
+
+    Hasher::update_to_move(hash, PositionInfo::get_to_move(position_info));
+    Hasher::update_castling_rights(hash, position_info);
+    Hasher::update_en_passant(hash, PositionInfo::get_en_passant_file(position_info));
+    hash_count[hash]++;
 }
 
 bool Board::is_occupied(Square_t square)
@@ -184,6 +191,8 @@ void Board::move_piece(Square_t start_square, Square_t target_square)
 
 void Board::make_move(Move_t move)
 {
+    previous_hashes.push(hash);
+
     PositionInfo_t new_position_info = 0;
     PositionInfo::set_castling_rights(new_position_info,
                                       PositionInfo::get_castling_rights(position_info));
@@ -201,6 +210,7 @@ void Board::make_move(Move_t move)
     {
         Square_t en_passant_capture_square =
             get_en_passant_capture_square(start_square, target_square);
+        Hasher::update_square(hash, en_passant_capture_square, pieces[en_passant_capture_square]);
         pieces[en_passant_capture_square] = Piece::NONE;
     }
 
@@ -214,17 +224,23 @@ void Board::make_move(Move_t move)
         if (target_square == start_square + 2)
         {
             // Short castle
+            Hasher::update_square(hash, start_square + 3, pieces[start_square + 3]);
             move_piece(start_square + 3, start_square + 1); // Moves rook
+            Hasher::update_square(hash, start_square + 1, pieces[start_square + 1]);
         }
         if (target_square == start_square - 2)
         {
             // Long castle
+            Hasher::update_square(hash, start_square - 4, pieces[start_square - 4]);
             move_piece(start_square - 4, start_square - 1); // Moves rook
+            Hasher::update_square(hash, start_square - 1, pieces[start_square - 1]);
         }
         PositionInfo::set_castling_right(new_position_info, moving_color, true, false);
         PositionInfo::set_castling_right(new_position_info, moving_color, false, false);
     }
 
+    Hasher::update_square(hash, target_square, pieces[target_square]);
+    Hasher::update_square(hash, start_square, pieces[start_square]);
     move_piece(start_square, target_square);
 
     if (Move::is_pawn_promotion(move))
@@ -232,6 +248,8 @@ void Board::make_move(Move_t move)
         PieceType_t promoted_piece_type = Move::get_pawn_promotion_piece_type(move);
         pieces[target_square] = Piece::create_piece(promoted_piece_type, moving_color);
     }
+
+    Hasher::update_square(hash, target_square, pieces[target_square]);
 
     if (PositionInfo::get_castling_right(position_info, moving_color, true))
     {
@@ -266,6 +284,22 @@ void Board::make_move(Move_t move)
             PositionInfo::set_castling_right(new_position_info, next_move_color, false, false);
         }
     }
+
+    Hasher::update_to_move(hash, PositionInfo::get_to_move(new_position_info));
+
+    if (PositionInfo::get_castling_rights(new_position_info) !=
+        PositionInfo::get_castling_rights(position_info))
+    {
+        Hasher::update_castling_rights(hash, new_position_info);
+    }
+
+    if (PositionInfo::get_en_passant_file(new_position_info) !=
+        PositionInfo::get_en_passant_file(position_info))
+    {
+        Hasher::update_en_passant(hash, PositionInfo::get_en_passant_file(new_position_info));
+    }
+    hash_count[hash]++;
+
     previous_positions.push(position_info);
     position_info = new_position_info;
 }
@@ -278,6 +312,10 @@ void Board::unmake_move(Move_t move)
 
     PositionInfo_t previous_position_info = previous_positions.top();
     previous_positions.pop();
+
+    hash_count[hash]--;
+    hash = previous_hashes.top();
+    previous_hashes.pop();
 
     if (Move::is_pawn_promotion(move))
     {
@@ -322,6 +360,9 @@ void Board::reset()
     pieces.fill(Piece::NONE);
     position_info = 0;
     previous_positions = {};
+    hash = 0;
+    previous_hashes = {};
+    hash_count.clear();
 }
 
 Piece_t Board::get_captured_piece(Move_t move)
@@ -365,4 +406,19 @@ std::string Board::to_string(DisplayMode display_mode)
     }
 
     return board_str.str();
+}
+
+const std::array<Piece_t, Board::TOTAL_SQUARES>& Board::get_pieces()
+{
+    return pieces;
+}
+
+PositionInfo_t Board::get_position_info()
+{
+    return position_info;
+}
+
+bool Board::is_threefold_repetition()
+{
+    return hash_count[hash] >= 3;
 }

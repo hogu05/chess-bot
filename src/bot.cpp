@@ -69,14 +69,20 @@ int Bot::search(int depth, int alpha, int beta, bool is_quiescence, bool& stop)
         return 0;
     }
 
+    if (board.is_threefold_repetition())
+    {
+        return THREEFOLD_REPETITION_SCORE;
+    }
+
     if (depth == 0)
     {
         is_quiescence = true;
     }
 
-    int static_score = evaluator.get_evaluation();
+    int static_score;
     if (is_quiescence)
     {
+        static_score = evaluator.get_evaluation();
         if (static_score >= beta)
             return beta;
         if (alpha < static_score)
@@ -121,7 +127,7 @@ int Bot::get_move_priority(Move_t move)
 {
     int priority = 0;
     PieceType_t moved_piece_type =
-        Piece::get_piece_type(board.pieces[Move::get_start_square(move)]);
+        Piece::get_piece_type(board.get_pieces()[Move::get_start_square(move)]);
     PieceType_t captured_piece_type = Piece::get_piece_type(board.get_captured_piece(move));
 
     if (captured_piece_type != Piece::NONE)
@@ -130,7 +136,10 @@ int Bot::get_move_priority(Move_t move)
                     Piece::get_piece_value(moved_piece_type);
     }
 
-    priority += Piece::get_piece_value(Move::get_pawn_promotion_piece_type(move));
+    if (Move::is_pawn_promotion(move))
+    {
+        priority += Piece::get_piece_value(Move::get_pawn_promotion_piece_type(move));
+    }
 
     return priority;
 }
@@ -143,8 +152,8 @@ void Bot::order_moves(std::vector<Move_t>& moves)
 
 bool Bot::is_noisy(Move_t move)
 {
-    return board.get_captured_piece(move) != Piece::NONE ||
-           Move::get_pawn_promotion_piece_type(move) != Piece::NONE;
+    return (board.get_captured_piece(move) != Piece::NONE) ||
+           (Move::is_pawn_promotion(move) != Piece::NONE);
 }
 
 Board& Bot::get_board()
