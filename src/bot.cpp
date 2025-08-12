@@ -25,6 +25,11 @@ void Bot::go(std::function<void(int, Move_t, int)> callback, bool& stop)
 
         for (Move_t move : root_moves)
         {
+            if (stop)
+            {
+                break;
+            }
+
             board.make_move(move);
             int score = -search(depth - 1, -INF, INF, false, stop);
             board.unmake_move(move);

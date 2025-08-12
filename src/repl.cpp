@@ -87,7 +87,6 @@ void Repl::handle_command(std::string command, std::vector<std::string> args)
             old_board_string = bot.get_board().to_string(display_mode);
             info_line = "Analysis starting";
             analysis_thread = std::thread([this, callback]() { bot.go(callback, stop_analysis); });
-            analysis_thread.detach();
             return;
         }
 
@@ -110,6 +109,7 @@ void Repl::handle_command(std::string command, std::vector<std::string> args)
         if (mode == Mode::ANALYSE)
         {
             stop_analysis = true;
+            analysis_thread.join();
         }
 
         mode = Mode::FINISHED;
@@ -147,6 +147,7 @@ void Repl::handle_command(std::string command, std::vector<std::string> args)
         if (mode == Mode::ANALYSE)
         {
             stop_analysis = true;
+            analysis_thread.join();
             info_line = "Analysis stopped";
         }
 
@@ -212,7 +213,6 @@ void Repl::handle_command(std::string command, std::vector<std::string> args)
 
     if (mode == Mode::IDLE)
     {
-
         info_line = "Unknown command: " + command;
     }
 }
