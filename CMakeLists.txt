@@ -2,10 +2,12 @@ cmake_minimum_required(VERSION 3.28)
 project(chess-bot)
 
 set(CMAKE_CXX_STANDARD 26)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
 
-include_directories(include)
-
-set(CHESS_SOURCES
+add_library(chess_core
     src/bot.cpp
     src/board.cpp
     src/piece.cpp
@@ -20,13 +22,16 @@ set(CHESS_SOURCES
     src/hasher.cpp
 )
 
+target_include_directories(chess_core PUBLIC include)
+
 add_executable(chess-bot
     src/main.cpp
     src/repl.cpp
-    ${CHESS_SOURCES}
 )
+target_link_libraries(chess-bot PRIVATE chess_core)
 
 add_executable(tests
     tests/perft.cpp
-    ${CHESS_SOURCES}
 )
+target_link_libraries(tests PRIVATE chess_core)
+
