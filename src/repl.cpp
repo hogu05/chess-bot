@@ -169,28 +169,29 @@ void Repl::handle_command(std::string command, std::vector<std::string> args)
         if (mode == Mode::IDLE)
         {
             info_line =
-                "load <FEN>         - Load a position from FEN (default: starting position)\n";
+                "load <FEN>         - Load a position from FEN (default: starting position).\n";
+            info_line += "move <notation>    - Make a move by entering the starting square "
+                         "followed by the ending square (e.g., e2e4).\n";
+            info_line += "go                 - Start engine analysis.\n";
+            info_line += "play [time]        - Start playing against the engine from the current "
+                         "position, optionally specifying the bot's thinking time in milliseconds "
+                         "(default: 3000 ms).\n";
             info_line +=
-                "move <notation>    - Make a move using standard algebraic notation (e.g., e2e4)\n";
-            info_line += "go                 - Start engine analysis\n";
-            info_line += "play [time]        - Start playing against a bot from current position, "
-                         "optionally specifying thinking time in milliseconds (default: 3000ms)\n";
-            info_line += "display <mode>     - Change the display mode (letters or unicode)\n";
-            info_line += "stop               - Stop the current analysis or game\n";
-            info_line += "quit               - End the programme\n";
+                "display <mode>     - Change the board display mode (letters or unicode).\n";
+            info_line += "quit               - Exit the program\n";
             info_line += "help               - Show commands for the current mode";
         }
 
         if (mode == Mode::PLAY)
         {
-            info_line =
-                "<notation>         - Make a move using standard algebraic notation (e.g., e2e4)\n";
-            info_line += "stop               - Stop the game";
+            info_line = "<notation>         - Play a move by entering the starting square followed "
+                        "by the ending square (e.g., e2e4).\n";
+            info_line += "stop               - Stop the game.";
         }
 
         if (mode == Mode::ANALYSE)
         {
-            info_line = "stop               - Stop the analysis";
+            info_line = "stop               - Stop the engine analysis.";
         }
 
         return;

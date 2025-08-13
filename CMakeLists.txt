@@ -4,7 +4,7 @@ project(chess-bot)
 set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+    set(CMAKE_BUILD_TYPE Release)
 endif()
 
 add_library(chess_core
@@ -30,8 +30,8 @@ add_executable(chess-bot
 )
 target_link_libraries(chess-bot PRIVATE chess_core)
 
-add_executable(tests
+add_executable(perft
     tests/perft.cpp
 )
-target_link_libraries(tests PRIVATE chess_core)
+target_link_libraries(perft PRIVATE chess_core)
 
