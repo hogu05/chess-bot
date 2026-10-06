@@ -3,19 +3,13 @@
 
 #include <cstdint>
 
-using Square_t = int;
-using Bitboard_t = uint64_t;
-using Direction_t = int;
-using Move_t = int;
-using Piece_t = int;
-using PositionInfo_t = int;
-using Color_t = int;
-using PieceType_t = int;
-
-enum class DisplayMode
-{
-    LETTERS,
-    UNICODE
-};
+using Square = int;
+using Bitboard = uint64_t;
+using Direction = int;
+using Move = int;
+using Piece = int;
+using PositionInfo = int;
+using Color = int;
+using PieceType = int;
 
 #endif

@@ -1,86 +1,97 @@
 #include "hasher.hpp"
 
+#include <array>
 #include <random>
 
-#include "board.hpp"
 #include "piece.hpp"
 #include "position_info.hpp"
+#include "square.hpp"
 
-namespace Hasher
+namespace hasher
 {
-std::array<std::array<uint64_t, Board::TOTAL_SQUARES>, Piece::PIECE_TYPE_COUNT * Board::COLORS>
-    piece_keys;
-uint64_t to_move_key;
-uint64_t white_short_castle_key;
-uint64_t white_long_castle_key;
-uint64_t black_short_castle_key;
-uint64_t black_long_castle_key;
-std::array<uint64_t, Board::FILES + 1> en_passant_keys;
+namespace
+{
+struct Keys
+{
+    std::array<std::array<uint64_t, square::TOTAL_SQUARES>, piece::PIECE_TYPE_COUNT * piece::COLORS>
+        piece_keys;
+    uint64_t to_move_key;
+    uint64_t white_short_castle_key;
+    uint64_t white_long_castle_key;
+    uint64_t black_short_castle_key;
+    uint64_t black_long_castle_key;
+    std::array<uint64_t, square::FILES + 1> en_passant_keys;
+};
 
-void init_hasher()
+Keys generate_keys()
 {
+    Keys keys{};
     std::mt19937_64 gen(std::random_device{}());
     std::uniform_int_distribution<uint64_t> dis;
 
-    for (int piece_index = 0; piece_index < Piece::PIECE_TYPE_COUNT * 2; piece_index++)
+    for (int piece_index = 0; piece_index < piece::PIECE_TYPE_COUNT * 2; piece_index++)
     {
-        for (Square_t square = 0; square < Board::TOTAL_SQUARES; square++)
+        for (Square square = 0; square < square::TOTAL_SQUARES; square++)
         {
-            piece_keys[piece_index][square] = dis(gen);
+            keys.piece_keys[piece_index][square] = dis(gen);
         }
     }
-    to_move_key = dis(gen);
+    keys.to_move_key = dis(gen);
 
-    white_short_castle_key = dis(gen);
-    white_long_castle_key = dis(gen);
-    black_short_castle_key = dis(gen);
-    black_long_castle_key = dis(gen);
+    keys.white_short_castle_key = dis(gen);
+    keys.white_long_castle_key = dis(gen);
+    keys.black_short_castle_key = dis(gen);
+    keys.black_long_castle_key = dis(gen);
 
-    for (int i = 0; i < Board::FILES + 1; i++)
+    for (int i = 0; i < square::FILES + 1; i++)
     {
-        en_passant_keys[i] = dis(gen);
+        keys.en_passant_keys[i] = dis(gen);
     }
+    return keys;
 }
 
-void update_square(uint64_t& hash, Square_t square, Piece_t piece)
+const Keys keys = generate_keys();
+} // namespace
+
+void update_square(uint64_t& hash, Square square, Piece piece)
 {
-    int piece_index = Piece::get_piece_index(piece);
+    int piece_index = piece::get_piece_index(piece);
     if (piece_index != -1)
     {
-        hash ^= piece_keys[piece_index][square];
+        hash ^= keys.piece_keys[piece_index][square];
     }
 }
-void update_to_move(uint64_t& hash, Color_t color)
+void update_to_move(uint64_t& hash, Color color)
 {
-    hash ^= to_move_key * color;
+    hash ^= keys.to_move_key * color;
 }
 
-void update_castling_rights(uint64_t& hash, PositionInfo_t position_info)
+void update_castling_rights(uint64_t& hash, PositionInfo position_info)
 {
-    if (PositionInfo::get_castling_right(position_info, Piece::WHITE, true))
+    if (position_info::get_castling_right(position_info, piece::WHITE, true))
     {
-        hash ^= white_short_castle_key;
+        hash ^= keys.white_short_castle_key;
     }
 
-    if (PositionInfo::get_castling_right(position_info, Piece::WHITE, false))
+    if (position_info::get_castling_right(position_info, piece::WHITE, false))
     {
-        hash ^= white_long_castle_key;
+        hash ^= keys.white_long_castle_key;
     }
 
-    if (PositionInfo::get_castling_right(position_info, Piece::BLACK, true))
+    if (position_info::get_castling_right(position_info, piece::BLACK, true))
     {
-        hash ^= black_short_castle_key;
+        hash ^= keys.black_short_castle_key;
     }
 
-    if (PositionInfo::get_castling_right(position_info, Piece::BLACK, false))
+    if (position_info::get_castling_right(position_info, piece::BLACK, false))
     {
-        hash ^= black_long_castle_key;
+        hash ^= keys.black_long_castle_key;
     }
 }
 
 void update_en_passant(uint64_t& hash, int file)
 {
     file = file == -1 ? 8 : file;
-    hash ^= en_passant_keys[file];
+    hash ^= keys.en_passant_keys[file];
 }
-} // namespace Hasher
+} // namespace hasher

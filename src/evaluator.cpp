@@ -5,19 +5,22 @@
 #include "position_info.hpp"
 #include "types.hpp"
 
-Evaluator::Evaluator(Board& board) : board(board)
+namespace evaluator
 {
-}
+namespace
+{
+constexpr int ENDGAME_MATERIAL_LIMIT = 4000;
+} // namespace
 
-int Evaluator::get_evaluation()
+int evaluate(const Board& board)
 {
     int evaluation = 0;
     int total_material = 0;
-    for (Piece_t piece : board.get_pieces())
+    for (Piece piece : board.get_pieces())
     {
-        int piece_value = Piece::get_piece_value(Piece::get_piece_type(piece));
+        int piece_value = evaluator::get_piece_value(piece::get_piece_type(piece));
         total_material += piece_value;
-        if (Piece::get_piece_color(piece) == PositionInfo::get_to_move(board.get_position_info()))
+        if (piece::get_piece_color(piece) == position_info::get_to_move(board.get_position_info()))
         {
             evaluation += piece_value;
         }
@@ -28,19 +31,20 @@ int Evaluator::get_evaluation()
     }
 
     bool is_endgame = total_material <= ENDGAME_MATERIAL_LIMIT;
-    for (Square_t square = 0; square < Board::TOTAL_SQUARES; square++)
+    for (Square square = 0; square < square::TOTAL_SQUARES; square++)
     {
-        Piece_t piece = board.get_pieces()[square];
-        PieceSquareTables::get_piece_score(piece, square, is_endgame);
-        if (Piece::get_piece_color(piece) == PositionInfo::get_to_move(board.get_position_info()))
+        Piece piece = board.get_pieces()[square];
+        piece_square_tables::get_piece_score(piece, square, is_endgame);
+        if (piece::get_piece_color(piece) == position_info::get_to_move(board.get_position_info()))
         {
-            evaluation += PieceSquareTables::get_piece_score(piece, square, is_endgame);
+            evaluation += piece_square_tables::get_piece_score(piece, square, is_endgame);
         }
         else
         {
-            evaluation -= PieceSquareTables::get_piece_score(piece, square, is_endgame);
+            evaluation -= piece_square_tables::get_piece_score(piece, square, is_endgame);
         }
     }
 
     return evaluation;
 }
+} // namespace evaluator

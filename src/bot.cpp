@@ -7,23 +7,24 @@
 #include <unordered_map>
 #include <vector>
 
+#include "evaluator.hpp"
 #include "move.hpp"
 #include "piece.hpp"
 
-void Bot::go(std::function<void(int, Move_t, int)> callback, bool& stop)
+void Bot::go(const std::function<void(int, Move, int)>& callback, bool& stop)
 {
-    Move_t best_move;
-    std::unordered_map<Move_t, int> root_move_scores;
+    Move best_move = 0;
+    std::unordered_map<Move, int> root_move_scores;
 
     for (int depth = 1; !stop; depth++)
     {
         int best_score = -INF;
-        std::vector<Move_t> root_moves = move_generator.get_moves();
+        std::vector<Move> root_moves = move_generator.get_moves();
 
         std::sort(root_moves.begin(), root_moves.end(),
-                  [&](Move_t a, Move_t b) { return root_move_scores[a] > root_move_scores[b]; });
+                  [&](Move a, Move b) { return root_move_scores[a] > root_move_scores[b]; });
 
-        for (Move_t move : root_moves)
+        for (Move move : root_moves)
         {
             if (stop)
             {
@@ -50,12 +51,12 @@ void Bot::go(std::function<void(int, Move_t, int)> callback, bool& stop)
     }
 }
 
-Move_t Bot::play(int thinking_time)
+Move Bot::play(int thinking_time)
 {
-    Move_t best_move;
+    Move best_move = 0;
     bool stop = false;
 
-    auto depth_callback = [this, &best_move](int depth, const Move_t& move, int eval)
+    auto depth_callback = [this, &best_move](int depth, const Move& move, int eval)
     { best_move = move; };
 
     std::thread analysis_thread([this, &depth_callback, &stop] { go(depth_callback, stop); });
@@ -84,21 +85,22 @@ int Bot::search(int depth, int alpha, int beta, bool is_quiescence, bool& stop)
         is_quiescence = true;
     }
 
-    int static_score;
+    int static_score = 0;
     if (is_quiescence)
     {
-        static_score = evaluator.get_evaluation();
+        static_score = evaluator::evaluate(board);
         if (static_score >= beta)
+        {
             return beta;
-        if (alpha < static_score)
-            alpha = static_score;
+        }
+        alpha = std::max(alpha, static_score);
     }
 
-    std::vector<Move_t> moves = move_generator.get_moves();
+    std::vector<Move> moves = move_generator.get_moves();
     order_moves(moves);
 
     bool found_move = false;
-    for (Move_t move : moves)
+    for (Move move : moves)
     {
         if (is_quiescence && !is_noisy(move))
         {
@@ -118,47 +120,48 @@ int Bot::search(int depth, int alpha, int beta, bool is_quiescence, bool& stop)
     }
 
     if (!found_move && is_quiescence)
+    {
         return static_score;
+    }
 
     if (!found_move)
     {
-        return move_generator.is_check() ? -MATE_SCORE - depth * 1000 : STALEMATE_SCORE;
+        return move_generator.is_check() ? -MATE_SCORE - (depth * 1000) : STALEMATE_SCORE;
     }
 
     return alpha;
 }
 
-int Bot::get_move_priority(Move_t move)
+int Bot::get_move_priority(Move move) const
 {
     int priority = 0;
-    PieceType_t moved_piece_type =
-        Piece::get_piece_type(board.get_pieces()[Move::get_start_square(move)]);
-    PieceType_t captured_piece_type = Piece::get_piece_type(board.get_captured_piece(move));
+    PieceType moved_piece_type =
+        piece::get_piece_type(board.get_pieces()[move::get_start_square(move)]);
+    PieceType captured_piece_type = piece::get_piece_type(board.get_captured_piece(move));
 
-    if (captured_piece_type != Piece::NONE)
+    if (captured_piece_type != piece::NONE)
     {
-        priority += 10 * Piece::get_piece_value(captured_piece_type) -
-                    Piece::get_piece_value(moved_piece_type);
+        priority += (10 * evaluator::get_piece_value(captured_piece_type)) -
+                    evaluator::get_piece_value(moved_piece_type);
     }
 
-    if (Move::is_pawn_promotion(move))
+    if (move::is_pawn_promotion(move))
     {
-        priority += Piece::get_piece_value(Move::get_pawn_promotion_piece_type(move));
+        priority += evaluator::get_piece_value(move::get_pawn_promotion_piece_type(move));
     }
 
     return priority;
 }
 
-void Bot::order_moves(std::vector<Move_t>& moves)
+void Bot::order_moves(std::vector<Move>& moves) const
 {
-    std::sort(moves.begin(), moves.end(), [this](const Move_t& move_1, const Move_t& move_2)
+    std::sort(moves.begin(), moves.end(), [this](const Move& move_1, const Move& move_2)
               { return get_move_priority(move_1) > get_move_priority(move_2); });
 }
 
-bool Bot::is_noisy(Move_t move)
+bool Bot::is_noisy(Move move) const
 {
-    return (board.get_captured_piece(move) != Piece::NONE) ||
-           (Move::is_pawn_promotion(move) != Piece::NONE);
+    return (board.get_captured_piece(move) != piece::NONE) || move::is_pawn_promotion(move);
 }
 
 Board& Bot::get_board()
@@ -171,7 +174,7 @@ MoveGenerator& Bot::get_move_generator()
     return move_generator;
 }
 
-void Bot::load_position(std::string fen)
+void Bot::load_position(const std::string& fen)
 {
-    board.load_position(std::move(fen));
+    board.load_position(fen);
 }

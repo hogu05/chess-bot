@@ -1,6 +1,5 @@
 #include "board.hpp"
 
-#include <iostream>
 #include <sstream>
 #include <string>
 
@@ -9,71 +8,24 @@
 #include "piece.hpp"
 #include "position_info.hpp"
 
-int Board::get_file(int square)
-{
-    return square & 0b111;
-}
-
-int Board::get_rank(int square)
-{
-    return square >> 3;
-}
-
-Square_t Board::get_square(int file, int rank)
-{
-    return (rank << 3) | file;
-}
-
-bool Board::is_valid_square(Square_t square)
-{
-    return square >= 0 && square < TOTAL_SQUARES;
-}
-
-int Board::get_file_from_notation(char notation)
-{
-    return notation - 'a';
-}
-
-char Board::get_file_notation(int file)
-{
-    return 'a' + file;
-}
-
-Square_t Board::get_square_from_notation(std::string notation)
-{
-    int file = get_file_from_notation(notation[0]);
-    int rank = notation[1] - '0' - 1;
-    return get_square(file, rank);
-}
-
-std::string Board::get_square_notation(int square)
-{
-    std::string notation;
-    char file = get_file_notation(get_file(square));
-    char rank = get_rank(square) + 1 + '0';
-    notation += file;
-    notation += rank;
-    return notation;
-}
-
-Square_t Board::get_en_passant_square(int en_passant_file, Color_t to_move)
+Square Board::get_en_passant_square(int en_passant_file, Color to_move)
 {
     if (en_passant_file == -1)
     {
         return -1;
     }
-    int rank = to_move == Piece::WHITE ? 5 : 2;
-    return get_square(en_passant_file, rank);
+    int rank = to_move == piece::WHITE ? 5 : 2;
+    return square::create_square(en_passant_file, rank);
 }
 
-Square_t Board::get_en_passant_capture_square(int start_square, Color_t target_square)
+Square Board::get_en_passant_capture_square(Square start_square, Square target_square)
 {
-    int file = get_file(target_square);
-    int rank = get_rank(start_square);
-    return get_square(file, rank);
+    int file = square::get_file(target_square);
+    int rank = square::get_rank(start_square);
+    return square::create_square(file, rank);
 }
 
-void Board::load_position(std::string fen)
+void Board::load_position(const std::string& fen)
 {
     reset();
 
@@ -83,7 +35,7 @@ void Board::load_position(std::string fen)
         fen_info[5];
 
     // Getting pieces
-    Square_t square = 56;
+    Square square = 56;
     for (char current_char : fen_info[0])
     {
         if (current_char == '/')
@@ -91,14 +43,14 @@ void Board::load_position(std::string fen)
             square -= 16;
             continue;
         }
-        if (std::isdigit(current_char))
+        if (std::isdigit(current_char) != 0)
         {
             square += current_char - '0';
         }
         else
         {
-            pieces[square] = Piece::get_piece_from_symbol(current_char);
-            Hasher::update_square(hash, square, pieces[square]);
+            pieces[square] = piece::get_piece_from_symbol(current_char);
+            hasher::update_square(hash, square, pieces[square]);
             square++;
         }
     }
@@ -106,12 +58,12 @@ void Board::load_position(std::string fen)
     // Getting to_move color
     if (fen_info[1] == "w")
     {
-        PositionInfo::set_to_move(position_info, Piece::WHITE);
+        position_info::set_to_move(position_info, piece::WHITE);
     }
 
     if (fen_info[1] == "b")
     {
-        PositionInfo::set_to_move(position_info, Piece::BLACK);
+        position_info::set_to_move(position_info, piece::BLACK);
     }
 
     // Getting castling rights
@@ -120,16 +72,16 @@ void Board::load_position(std::string fen)
         switch (current_char)
         {
         case 'K':
-            PositionInfo::set_castling_right(position_info, Piece::WHITE, true, true);
+            position_info::set_castling_right(position_info, piece::WHITE, true, true);
             break;
         case 'Q':
-            PositionInfo::set_castling_right(position_info, Piece::WHITE, false, true);
+            position_info::set_castling_right(position_info, piece::WHITE, false, true);
             break;
         case 'k':
-            PositionInfo::set_castling_right(position_info, Piece::BLACK, true, true);
+            position_info::set_castling_right(position_info, piece::BLACK, true, true);
             break;
         case 'q':
-            PositionInfo::set_castling_right(position_info, Piece::BLACK, false, true);
+            position_info::set_castling_right(position_info, piece::BLACK, false, true);
             break;
         default:
             break;
@@ -139,14 +91,13 @@ void Board::load_position(std::string fen)
     // Getting en passant
     if (!fen_info[3].empty() && fen_info[3] != "-")
     {
-        PositionInfo::set_en_passant(position_info, true,
-                                     get_file(get_square_from_notation(fen_info[3])));
+        position_info::set_en_passant(position_info, true, fen_info[3][0] - 'a');
     }
 
     // Getting fifty move rule half-moves
     if (!fen_info[4].empty())
     {
-        PositionInfo::set_fifty_move_ply(position_info, std::stoi(fen_info[4]));
+        position_info::set_fifty_move_ply(position_info, std::stoi(fen_info[4]));
     }
 
     // Getting full moves
@@ -157,146 +108,141 @@ void Board::load_position(std::string fen)
 
     previous_positions.push(position_info);
 
-    Hasher::update_to_move(hash, PositionInfo::get_to_move(position_info));
-    Hasher::update_castling_rights(hash, position_info);
-    Hasher::update_en_passant(hash, PositionInfo::get_en_passant_file(position_info));
+    hasher::update_to_move(hash, position_info::get_to_move(position_info));
+    hasher::update_castling_rights(hash, position_info);
+    hasher::update_en_passant(hash, position_info::get_en_passant_file(position_info));
     hash_count[hash]++;
 }
 
-bool Board::is_occupied(Square_t square)
+bool Board::is_occupied(Square square) const
 {
-    return Piece::get_piece_type(pieces[square]) != Piece::NONE;
+    return piece::get_piece_type(pieces[square]) != piece::NONE;
 }
 
-bool Board::is_empty(Square_t square)
+Color Board::get_piece_color(Square square) const
 {
-    return Piece::get_piece_type(pieces[square]) == Piece::NONE;
+    return piece::get_piece_color(pieces[square]);
 }
 
-Color_t Board::get_piece_color(Square_t square)
+PieceType Board::get_piece_type(Square square) const
 {
-    return Piece::get_piece_color(pieces[square]);
+    return piece::get_piece_type(pieces[square]);
 }
 
-PieceType_t Board::get_piece_type(Square_t square)
-{
-    return Piece::get_piece_type(pieces[square]);
-}
-
-void Board::move_piece(Square_t start_square, Square_t target_square)
+void Board::move_piece(Square start_square, Square target_square)
 {
     pieces[target_square] = pieces[start_square];
-    pieces[start_square] = Piece::NONE;
+    pieces[start_square] = piece::NONE;
 }
 
-void Board::make_move(Move_t move)
+void Board::make_move(Move move)
 {
     previous_hashes.push(hash);
 
-    PositionInfo_t new_position_info = 0;
-    PositionInfo::set_castling_rights(new_position_info,
-                                      PositionInfo::get_castling_rights(position_info));
-    Square_t start_square = Move::get_start_square(move);
-    Square_t target_square = Move::get_target_square(move);
-    int move_flag = Move::get_flag(move);
-    Color_t moving_color = PositionInfo::get_to_move(position_info);
-    Color_t next_move_color = Piece::get_other_color(moving_color);
+    PositionInfo new_position_info = 0;
+    position_info::set_castling_rights(new_position_info,
+                                      position_info::get_castling_rights(position_info));
+    Square start_square = move::get_start_square(move);
+    Square target_square = move::get_target_square(move);
+    int move_flag = move::get_flag(move);
+    Color moving_color = position_info::get_to_move(position_info);
+    Color next_move_color = piece::get_other_color(moving_color);
 
-    PositionInfo::set_to_move(new_position_info, next_move_color);
+    position_info::set_to_move(new_position_info, next_move_color);
 
-    PositionInfo::set_captured_piece(new_position_info, get_captured_piece(move));
+    position_info::set_captured_piece(new_position_info, get_captured_piece(move));
 
-    if (move_flag == Move::EN_PASSANT_FLAG)
+    if (move_flag == move::EN_PASSANT_FLAG)
     {
-        Square_t en_passant_capture_square =
+        Square en_passant_capture_square =
             get_en_passant_capture_square(start_square, target_square);
-        Hasher::update_square(hash, en_passant_capture_square, pieces[en_passant_capture_square]);
-        pieces[en_passant_capture_square] = Piece::NONE;
+        hasher::update_square(hash, en_passant_capture_square, pieces[en_passant_capture_square]);
+        pieces[en_passant_capture_square] = piece::NONE;
     }
 
-    if (move_flag == Move::TWO_SPACE_PAWN_MOVE_FLAG)
+    if (move_flag == move::TWO_SPACE_PAWN_MOVE_FLAG)
     {
-        PositionInfo::set_en_passant(new_position_info, true, get_file(start_square));
+        position_info::set_en_passant(new_position_info, true, square::get_file(start_square));
     }
 
-    if (move_flag == Move::CASTLE_FLAG)
+    if (move_flag == move::CASTLE_FLAG)
     {
         if (target_square == start_square + 2)
         {
             // Short castle
-            Hasher::update_square(hash, start_square + 3, pieces[start_square + 3]);
+            hasher::update_square(hash, start_square + 3, pieces[start_square + 3]);
             move_piece(start_square + 3, start_square + 1); // Moves rook
-            Hasher::update_square(hash, start_square + 1, pieces[start_square + 1]);
+            hasher::update_square(hash, start_square + 1, pieces[start_square + 1]);
         }
         if (target_square == start_square - 2)
         {
             // Long castle
-            Hasher::update_square(hash, start_square - 4, pieces[start_square - 4]);
+            hasher::update_square(hash, start_square - 4, pieces[start_square - 4]);
             move_piece(start_square - 4, start_square - 1); // Moves rook
-            Hasher::update_square(hash, start_square - 1, pieces[start_square - 1]);
+            hasher::update_square(hash, start_square - 1, pieces[start_square - 1]);
         }
-        PositionInfo::set_castling_right(new_position_info, moving_color, true, false);
-        PositionInfo::set_castling_right(new_position_info, moving_color, false, false);
+        position_info::set_castling_right(new_position_info, moving_color, true, false);
+        position_info::set_castling_right(new_position_info, moving_color, false, false);
     }
 
-    Hasher::update_square(hash, target_square, pieces[target_square]);
-    Hasher::update_square(hash, start_square, pieces[start_square]);
+    hasher::update_square(hash, target_square, pieces[target_square]);
+    hasher::update_square(hash, start_square, pieces[start_square]);
     move_piece(start_square, target_square);
 
-    if (Move::is_pawn_promotion(move))
+    if (move::is_pawn_promotion(move))
     {
-        PieceType_t promoted_piece_type = Move::get_pawn_promotion_piece_type(move);
-        pieces[target_square] = Piece::create_piece(promoted_piece_type, moving_color);
+        PieceType promoted_piece_type = move::get_pawn_promotion_piece_type(move);
+        pieces[target_square] = piece::create_piece(promoted_piece_type, moving_color);
     }
 
-    Hasher::update_square(hash, target_square, pieces[target_square]);
+    hasher::update_square(hash, target_square, pieces[target_square]);
 
-    if (PositionInfo::get_castling_right(position_info, moving_color, true))
+    if (position_info::get_castling_right(position_info, moving_color, true))
     {
         if (start_square == KINGSIDE_ROOK_START_SQUARE[moving_color] ||
             start_square == KING_START_SQUARE[moving_color])
         {
-            PositionInfo::set_castling_right(new_position_info, moving_color, true, false);
+            position_info::set_castling_right(new_position_info, moving_color, true, false);
         }
     }
 
-    if (PositionInfo::get_castling_right(position_info, moving_color, false))
+    if (position_info::get_castling_right(position_info, moving_color, false))
     {
         if (start_square == QUEENSIDE_ROOK_START_SQUARE[moving_color] ||
             start_square == KING_START_SQUARE[moving_color])
         {
-            PositionInfo::set_castling_right(new_position_info, moving_color, false, false);
+            position_info::set_castling_right(new_position_info, moving_color, false, false);
         }
     }
 
-    if (PositionInfo::get_castling_right(position_info, next_move_color, true))
+    if (position_info::get_castling_right(position_info, next_move_color, true))
     {
         if (target_square == KINGSIDE_ROOK_START_SQUARE[next_move_color])
         {
-            PositionInfo::set_castling_right(new_position_info, next_move_color, true, false);
+            position_info::set_castling_right(new_position_info, next_move_color, true, false);
         }
     }
 
-    if (PositionInfo::get_castling_right(position_info, next_move_color, false))
+    if (position_info::get_castling_right(position_info, next_move_color, false))
     {
         if (target_square == QUEENSIDE_ROOK_START_SQUARE[next_move_color])
         {
-            PositionInfo::set_castling_right(new_position_info, next_move_color, false, false);
+            position_info::set_castling_right(new_position_info, next_move_color, false, false);
         }
     }
 
-    Hasher::update_to_move(hash, PositionInfo::get_to_move(new_position_info));
+    hasher::update_to_move(hash, position_info::get_to_move(new_position_info));
 
-    if (PositionInfo::get_castling_rights(new_position_info) !=
-        PositionInfo::get_castling_rights(position_info))
+    if (position_info::get_castling_rights(new_position_info) !=
+        position_info::get_castling_rights(position_info))
     {
-        Hasher::update_castling_rights(hash, new_position_info);
+        hasher::update_castling_rights(hash, new_position_info);
     }
 
-    if (PositionInfo::get_en_passant_file(new_position_info) !=
-        PositionInfo::get_en_passant_file(position_info))
+    if (position_info::get_en_passant_file(new_position_info) !=
+        position_info::get_en_passant_file(position_info))
     {
-        Hasher::update_en_passant(hash, PositionInfo::get_en_passant_file(new_position_info));
+        hasher::update_en_passant(hash, position_info::get_en_passant_file(new_position_info));
     }
     hash_count[hash]++;
 
@@ -304,42 +250,42 @@ void Board::make_move(Move_t move)
     position_info = new_position_info;
 }
 
-void Board::unmake_move(Move_t move)
+void Board::unmake_move(Move move)
 {
-    Square_t start_square = Move::get_start_square(move);
-    Square_t target_square = Move::get_target_square(move);
-    int move_flag = Move::get_flag(move);
+    Square start_square = move::get_start_square(move);
+    Square target_square = move::get_target_square(move);
+    int move_flag = move::get_flag(move);
 
-    PositionInfo_t previous_position_info = previous_positions.top();
+    PositionInfo previous_position_info = previous_positions.top();
     previous_positions.pop();
 
     hash_count[hash]--;
     hash = previous_hashes.top();
     previous_hashes.pop();
 
-    if (Move::is_pawn_promotion(move))
+    if (move::is_pawn_promotion(move))
     {
         pieces[target_square] =
-            Piece::create_piece(Piece::PAWN, PositionInfo::get_to_move(previous_position_info));
+            piece::create_piece(piece::PAWN, position_info::get_to_move(previous_position_info));
     }
 
     move_piece(target_square, start_square);
 
-    bool is_capture = PositionInfo::get_captured_piece(position_info) != Piece::NONE;
+    bool is_capture = position_info::get_captured_piece(position_info) != piece::NONE;
     if (is_capture)
     {
-        if (move_flag == Move::EN_PASSANT_FLAG)
+        if (move_flag == move::EN_PASSANT_FLAG)
         {
             pieces[get_en_passant_capture_square(start_square, target_square)] =
-                PositionInfo::get_captured_piece(position_info);
+                position_info::get_captured_piece(position_info);
         }
         else
         {
-            pieces[target_square] = PositionInfo::get_captured_piece(position_info);
+            pieces[target_square] = position_info::get_captured_piece(position_info);
         }
     }
 
-    if (move_flag == Move::CASTLE_FLAG)
+    if (move_flag == move::CASTLE_FLAG)
     {
         if (target_square == start_square + 2)
         {
@@ -357,7 +303,7 @@ void Board::unmake_move(Move_t move)
 
 void Board::reset()
 {
-    pieces.fill(Piece::NONE);
+    pieces.fill(piece::NONE);
     position_info = 0;
     previous_positions = {};
     hash = 0;
@@ -365,60 +311,30 @@ void Board::reset()
     hash_count.clear();
 }
 
-Piece_t Board::get_captured_piece(Move_t move)
+Piece Board::get_captured_piece(Move move) const
 {
-    Square_t target_square = Move::get_target_square(move);
-    if (Move::get_flag(move) == Move::EN_PASSANT_FLAG)
+    Square target_square = move::get_target_square(move);
+    if (move::get_flag(move) == move::EN_PASSANT_FLAG)
     {
-        Square_t capture_square =
-            get_en_passant_capture_square(Move::get_start_square(move), target_square);
+        Square capture_square =
+            get_en_passant_capture_square(move::get_start_square(move), target_square);
         return pieces[capture_square];
     }
     return pieces[target_square];
 }
 
-std::string Board::to_string(DisplayMode display_mode)
-{
-    std::ostringstream board_str;
-
-    board_str << std::string(2, ' ') << '+' << std::string(17, '-') << '+' << std::endl;
-
-    for (int rank = RANKS - 1; rank >= 0; rank--)
-    {
-        board_str << rank + 1 << " | ";
-        for (int file = 0; file < FILES; file++)
-        {
-            Square_t square = get_square(file, rank);
-            board_str << Piece::get_piece_symbol(pieces[square], display_mode) << " ";
-        }
-        board_str << '|' << std::endl;
-    }
-
-    board_str << std::string(2, ' ') << '+' << std::string(17, '-') << '+' << std::endl;
-
-    board_str << (PositionInfo::get_to_move(position_info) == Piece::WHITE ? 'W' : 'B');
-
-    board_str << std::string(3, ' ');
-
-    for (int file = 0; file < FILES; file++)
-    {
-        board_str << get_file_notation(file) << ' ';
-    }
-
-    return board_str.str();
-}
-
-const std::array<Piece_t, Board::TOTAL_SQUARES>& Board::get_pieces()
+const std::array<Piece, square::TOTAL_SQUARES>& Board::get_pieces() const
 {
     return pieces;
 }
 
-PositionInfo_t Board::get_position_info()
+PositionInfo Board::get_position_info() const
 {
     return position_info;
 }
 
-bool Board::is_threefold_repetition()
+bool Board::is_threefold_repetition() const
 {
-    return hash_count[hash] >= 3;
+    auto it = hash_count.find(hash);
+    return it != hash_count.end() && it->second >= 3;
 }

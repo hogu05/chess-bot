@@ -1,29 +1,60 @@
 #ifndef BITBOARD_H
 #define BITBOARD_H
 
+#include <bit>
+
 #include "types.hpp"
 
-namespace Bitboard
+namespace bitboard
 {
-void set_square(Bitboard_t& bitboard, Square_t square);
+constexpr void set_square(Bitboard& bitboard, Square square)
+{
+    bitboard |= (1ULL << square);
+}
 
-void clear_square(Bitboard_t& bitboard, Square_t square);
+constexpr void clear_square(Bitboard& bitboard, Square square)
+{
+    bitboard &= ~(1ULL << square);
+}
 
-Square_t pop_square(Bitboard_t& bitboard);
+constexpr Square get_square(Bitboard bitboard)
+{
+    return std::countr_zero(bitboard);
+}
 
-Square_t get_square(Bitboard_t bitboard);
+constexpr Square pop_square(Bitboard& bitboard)
+{
+    Square square = get_square(bitboard);
+    clear_square(bitboard, square);
+    return square;
+}
 
-bool is_set(Bitboard_t bitboard, Square_t square);
+constexpr bool is_set(Bitboard bitboard, Square square)
+{
+    return (bitboard & (1ULL << square)) != 0;
+}
 
-bool is_clear(Bitboard_t bitboard, Square_t square);
+constexpr bool is_clear(Bitboard bitboard, Square square)
+{
+    return (bitboard & (1ULL << square)) == 0;
+}
 
-void clear_all(Bitboard_t& bitboard);
+constexpr void clear_all(Bitboard& bitboard)
+{
+    bitboard = 0;
+}
 
-void set_all(Bitboard_t& bitboard);
+constexpr void set_all(Bitboard& bitboard)
+{
+    bitboard = ~Bitboard{0};
+}
 
-Bitboard_t create_bitboard(Square_t square);
-
-void print_bitboard(Bitboard_t bitboard);
-} // namespace Bitboard
+constexpr Bitboard create_bitboard(Square square)
+{
+    Bitboard bitboard = 0;
+    set_square(bitboard, square);
+    return bitboard;
+}
+} // namespace bitboard
 
 #endif

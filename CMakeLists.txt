@@ -13,9 +13,7 @@ add_library(chess_core
     src/piece.cpp
     src/move_generator.cpp
     src/move.cpp
-    src/precomputations.cpp
     src/directions.cpp
-    src/bitboard.cpp
     src/position_info.cpp
     src/evaluator.cpp
     src/piece_square_tables.cpp
@@ -23,12 +21,6 @@ add_library(chess_core
 )
 
 target_include_directories(chess_core PUBLIC include)
-
-add_executable(chess-bot
-    src/main.cpp
-    src/repl.cpp
-)
-target_link_libraries(chess-bot PRIVATE chess_core)
 
 add_executable(perft
     tests/perft.cpp

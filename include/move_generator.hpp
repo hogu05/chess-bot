@@ -11,68 +11,66 @@ class MoveGenerator
 {
   public:
     explicit MoveGenerator(Board& board);
+    MoveGenerator(const MoveGenerator&) = delete;
+    MoveGenerator& operator=(const MoveGenerator&) = delete;
 
-    std::vector<Move_t> get_moves();
+    std::vector<Move> get_moves();
 
-    bool is_check();
-
-    bool is_checkmate();
-
-    bool is_stalemate();
+    bool is_check() const;
 
     int perft(int depth);
 
   private:
     Board& board;
 
-    Bitboard_t friendly_pieces_bb;
-    Bitboard_t enemy_pieces_bb;
-    Bitboard_t all_pieces_bb;
-    Bitboard_t friendly_king_bb;
-    Square_t en_passant_square;
-    Bitboard_t attacked_squares_bb;
-    Bitboard_t checking_piece_bb;
-    Bitboard_t blocking_squares_bb;
-    Bitboard_t pinned_pieces_bb;
-    Bitboard_t pinned_piece_possible_squares_bb;
+    Bitboard friendly_pieces_bb = 0;
+    Bitboard enemy_pieces_bb = 0;
+    Bitboard all_pieces_bb = 0;
+    Bitboard friendly_king_bb = 0;
+    Square en_passant_square = -1;
+    Bitboard attacked_squares_bb = 0;
+    Bitboard checking_piece_bb = 0;
+    Bitboard blocking_squares_bb = 0;
+    Bitboard pinned_pieces_bb = 0;
+    Bitboard pinned_piece_possible_squares_bb = 0;
 
     bool is_double_check = false;
 
-    std::vector<Move_t> get_piece_moves(Square_t square);
+    std::vector<Move> get_piece_moves(Square square) const;
 
-    std::vector<Move_t> get_pawn_moves(Square_t square, Color_t color);
+    std::vector<Move> get_pawn_moves(Square square, Color color) const;
 
-    std::vector<Move_t> get_knight_moves(Square_t square);
+    std::vector<Move> get_knight_moves(Square square) const;
 
-    std::vector<Move_t> get_sliding_piece_moves(Square_t square, Piece_t piece);
+    std::vector<Move> get_sliding_piece_moves(Square square, Piece piece) const;
 
-    std::vector<Move_t> get_king_moves(Square_t square, Color_t color);
+    std::vector<Move> get_king_moves(Square square, Color color) const;
 
-    std::vector<Move_t> get_pawn_promotion_moves(std::vector<Move_t> moves);
+    static std::vector<Move> get_pawn_promotion_moves(const std::vector<Move>& moves);
 
     void init_bitboards();
 
     void update_attacks();
 
-    Bitboard_t get_piece_attacks(Square_t square);
+    Bitboard get_piece_attacks(Square square) const;
 
-    Bitboard_t get_pawn_attacks(Square_t square, Color_t color);
+    static Bitboard get_pawn_attacks(Square square, Color color);
 
-    Bitboard_t get_knight_attacks(Square_t square);
+    static Bitboard get_knight_attacks(Square square);
 
-    Bitboard_t get_sliding_piece_attacks(Square_t square, Piece_t piece);
+    Bitboard get_sliding_piece_attacks(Square square, Piece piece) const;
 
-    Bitboard_t get_king_attacks(Square_t square);
+    static Bitboard get_king_attacks(Square square);
 
-    Bitboard_t get_pinned_pieces();
+    Bitboard get_pinned_pieces() const;
 
-    Bitboard_t get_blocking_squares();
+    Bitboard get_blocking_squares() const;
 
-    Bitboard_t get_pinned_piece_possible_squares(Square_t square);
+    Bitboard get_pinned_piece_possible_squares(Square square) const;
 
-    Bitboard_t get_legal_squares(Bitboard_t moves);
+    Bitboard get_legal_squares(Bitboard moves) const;
 
-    bool is_en_passant_legal(Square_t start_square, Square_t target_square);
+    bool is_en_passant_legal(Square start_square, Square target_square) const;
 };
 
 #endif

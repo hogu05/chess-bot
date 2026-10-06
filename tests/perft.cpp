@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <iomanip>
@@ -8,7 +9,6 @@
 
 #include "board.hpp"
 #include "move_generator.hpp"
-#include "precomputations.hpp"
 
 struct TestCase
 {
@@ -29,8 +29,6 @@ struct TestResult
 std::vector<TestResult> run_tests(std::vector<TestCase> tests)
 {
     std::vector<TestResult> results;
-
-    Precomputations::init_precomputations();
 
     Board board;
     MoveGenerator generator(board);
@@ -60,7 +58,7 @@ bool all_passed(std::vector<TestResult> results)
                        [](TestResult& result) { return result.passed; });
 }
 
-void print_results(std::vector<TestResult> results)
+void print_results(const std::vector<TestResult>& results)
 {
 
     std::cout << std::left;
@@ -74,7 +72,7 @@ void print_results(std::vector<TestResult> results)
     std::uint64_t total_nodes = 0;
     std::uint64_t total_time = 0;
 
-    for (TestResult& result : results)
+    for (const TestResult& result : results)
     {
         total_nodes += result.actual_nodes;
         total_time += result.time;
@@ -106,11 +104,21 @@ void print_results(std::vector<TestResult> results)
 int main()
 {
     std::vector<TestCase> tests = {
-        {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 6, 119060324},
-        {"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ", 4, 4085603},
-        {"8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1", 6, 11030083},
-        {"r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1", 5, 15833292},
-        {"rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8", 5, 89941194}};
+        {.fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+         .depth = 6,
+         .expected_nodes = 119060324},
+        {.fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ",
+         .depth = 4,
+         .expected_nodes = 4085603},
+        {.fen = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1",
+         .depth = 6,
+         .expected_nodes = 11030083},
+        {.fen = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",
+         .depth = 5,
+         .expected_nodes = 15833292},
+        {.fen = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8",
+         .depth = 5,
+         .expected_nodes = 89941194}};
 
     std::vector<TestResult> results = run_tests(tests);
     print_results(results);

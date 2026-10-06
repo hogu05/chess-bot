@@ -4,37 +4,37 @@
 
 #include "piece.hpp"
 #include "types.hpp"
-namespace PieceSquareTables
+namespace piece_square_tables
 {
-int get_piece_score(Piece_t piece, Square_t square, bool is_endgame)
+int get_piece_score(Piece piece, Square square, bool is_endgame)
 {
-    const std::array<int, Board::TOTAL_SQUARES>* table;
-    Piece_t piece_type = Piece::get_piece_type(piece);
-    Color_t piece_color = Piece::get_piece_color(piece);
+    const std::array<int, square::TOTAL_SQUARES>* table = nullptr;
+    Piece piece_type = piece::get_piece_type(piece);
+    Color piece_color = piece::get_piece_color(piece);
 
-    if (piece_type == Piece::NONE)
+    if (piece_type == piece::NONE)
     {
         return 0;
     }
 
     switch (piece_type)
     {
-    case Piece::PAWN:
+    case piece::PAWN:
         table = &pawn;
         break;
-    case Piece::KNIGHT:
+    case piece::KNIGHT:
         table = &knight;
         break;
-    case Piece::BISHOP:
+    case piece::BISHOP:
         table = &bishop;
         break;
-    case Piece::ROOK:
+    case piece::ROOK:
         table = &rook;
         break;
-    case Piece::QUEEN:
+    case piece::QUEEN:
         table = &queen;
         break;
-    case Piece::KING:
+    case piece::KING:
         if (is_endgame)
         {
             table = &king_end;
@@ -46,14 +46,14 @@ int get_piece_score(Piece_t piece, Square_t square, bool is_endgame)
         break;
     }
 
-    Square_t table_square = square;
+    Square table_square = square;
 
-    if (piece_color == Piece::WHITE)
+    if (piece_color == piece::WHITE)
     {
-        int rank = (Board::RANKS - 1) - Board::get_rank(square);
-        table_square = Board::get_square(Board::get_file(square), rank);
+        int rank = (square::RANKS - 1) - square::get_rank(square);
+        table_square = square::create_square(square::get_file(square), rank);
     }
 
     return (*table)[table_square];
 }
-} // namespace PieceSquareTables
+} // namespace piece_square_tables
