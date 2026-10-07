@@ -1,7 +1,5 @@
 #include "piece.hpp"
 
-#include <cctype>
-
 #include "directions.hpp"
 #include "square.hpp"
 #include "types.hpp"
@@ -16,38 +14,6 @@ PieceType get_piece_type(Piece piece)
 Color get_piece_color(Piece piece)
 {
     return (piece & PIECE_COLOR_MASK) >> PIECE_COLOR_SHIFT;
-}
-
-Piece get_piece_from_symbol(char symbol)
-{
-    PieceType piece_type = 0;
-    switch (tolower(symbol))
-    {
-    case 'p':
-        piece_type = PAWN;
-        break;
-    case 'n':
-        piece_type = KNIGHT;
-        break;
-    case 'b':
-        piece_type = BISHOP;
-        break;
-    case 'r':
-        piece_type = ROOK;
-        break;
-    case 'q':
-        piece_type = QUEEN;
-        break;
-    case 'k':
-        piece_type = KING;
-        break;
-    default:
-        piece_type = NONE;
-    }
-
-    Color piece_color = (std::isupper(symbol) != 0) ? WHITE : BLACK;
-
-    return create_piece(piece_type, piece_color);
 }
 
 Color get_other_color(Color color)

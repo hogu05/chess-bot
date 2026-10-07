@@ -1,9 +1,8 @@
 #include "bot.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
-#include <functional>
-#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -11,9 +10,18 @@
 #include "move.hpp"
 #include "piece.hpp"
 
-void Bot::go(const std::function<void(int, Move, int)>& callback, bool& stop)
+Move Bot::go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point deadline)
 {
-    Move best_move = 0;
+    search_deadline = deadline;
+    searched_nodes = 0;
+
+    std::vector<Move> legal_moves = move_generator.get_moves();
+    if (legal_moves.empty())
+    {
+        return move::NONE_MOVE;
+    }
+
+    Move best_move = legal_moves[0];
     std::unordered_map<Move, int> root_move_scores;
 
     for (int depth = 1; !stop; depth++)
@@ -26,14 +34,14 @@ void Bot::go(const std::function<void(int, Move, int)>& callback, bool& stop)
 
         for (Move move : root_moves)
         {
+            board.make_move(move);
+            int score = -search(depth - 1, -INF, INF, false, stop);
+            board.unmake_move(move);
+
             if (stop)
             {
                 break;
             }
-
-            board.make_move(move);
-            int score = -search(depth - 1, -INF, INF, false, stop);
-            board.unmake_move(move);
 
             root_move_scores[move] = score;
 
@@ -43,33 +51,19 @@ void Bot::go(const std::function<void(int, Move, int)>& callback, bool& stop)
                 best_move = move;
             }
         }
-
-        if (!stop)
-        {
-            callback(depth, best_move, best_score);
-        }
     }
-}
-
-Move Bot::play(int thinking_time)
-{
-    Move best_move = 0;
-    bool stop = false;
-
-    auto depth_callback = [this, &best_move](int depth, const Move& move, int eval)
-    { best_move = move; };
-
-    std::thread analysis_thread([this, &depth_callback, &stop] { go(depth_callback, stop); });
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(thinking_time));
-
-    stop = true;
-    analysis_thread.join();
     return best_move;
 }
 
-int Bot::search(int depth, int alpha, int beta, bool is_quiescence, bool& stop)
+int Bot::search(int depth, int alpha, int beta, bool is_quiescence, std::atomic<bool>& stop)
 {
+    searched_nodes++;
+    if (searched_nodes % DEADLINE_CHECK_INTERVAL == 0 &&
+        std::chrono::steady_clock::now() >= search_deadline)
+    {
+        stop = true;
+    }
+
     if (stop)
     {
         return 0;

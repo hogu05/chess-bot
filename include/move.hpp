@@ -28,6 +28,8 @@ constexpr int PROMOTE_TO_BISHOP_FLAG = 0b101;
 constexpr int PROMOTE_TO_ROOK_FLAG = 0b110;
 constexpr int PROMOTE_TO_QUEEN_FLAG = 0b111;
 
+constexpr Move NONE_MOVE = 0;
+
 Move create_move(Square start_square, Square target_square, int flag);
 
 Move create_move(Move move, int flag);

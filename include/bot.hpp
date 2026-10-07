@@ -1,7 +1,8 @@
 #ifndef BOT_H
 #define BOT_H
 
-#include <functional>
+#include <atomic>
+#include <chrono>
 #include <string>
 #include <vector>
 
@@ -12,8 +13,8 @@
 class Bot
 {
   public:
-    void go(const std::function<void(int, Move, int)>& callback, bool& stop);
-    Move play(int thinking_time);
+    // Searches until stopped or the deadline passes; returns move::NONE_MOVE if there is no legal move
+    Move go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point deadline);
     Board& get_board();
     MoveGenerator& get_move_generator();
     void load_position(const std::string& fen);
@@ -23,10 +24,14 @@ class Bot
     static constexpr int STALEMATE_SCORE = 0;
     static constexpr int THREEFOLD_REPETITION_SCORE = 0;
     static constexpr int INF = 1000000;
+    // How often (in searched nodes) the clock is checked against the deadline
+    static constexpr int DEADLINE_CHECK_INTERVAL = 2048;
 
     Board board;
     MoveGenerator move_generator = MoveGenerator(board);
-    int search(int depth, int alpha, int beta, bool is_quiescence, bool& stop);
+    std::chrono::steady_clock::time_point search_deadline;
+    std::uint64_t searched_nodes = 0;
+    int search(int depth, int alpha, int beta, bool is_quiescence, std::atomic<bool>& stop);
     int get_move_priority(Move move) const;
     void order_moves(std::vector<Move>& moves) const;
     bool is_noisy(Move move) const;

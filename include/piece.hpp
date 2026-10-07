@@ -30,8 +30,6 @@ PieceType get_piece_type(Piece piece);
 
 Color get_piece_color(Piece piece);
 
-Piece get_piece_from_symbol(char symbol);
-
 Color get_other_color(Color color);
 
 Piece create_piece(PieceType piece_type, Color color);

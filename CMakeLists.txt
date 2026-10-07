@@ -18,6 +18,7 @@ add_library(chess_core
     src/evaluator.cpp
     src/piece_square_tables.cpp
     src/hasher.cpp
+    src/notation.cpp
 )
 
 target_include_directories(chess_core PUBLIC include)
@@ -27,3 +28,7 @@ add_executable(perft
 )
 target_link_libraries(perft PRIVATE chess_core)
 
+add_executable(chess-bot-uci
+    src/uci.cpp
+)
+target_link_libraries(chess-bot-uci PRIVATE chess_core)

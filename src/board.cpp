@@ -5,6 +5,7 @@
 
 #include "hasher.hpp"
 #include "move.hpp"
+#include "notation.hpp"
 #include "piece.hpp"
 #include "position_info.hpp"
 
@@ -49,7 +50,7 @@ void Board::load_position(const std::string& fen)
         }
         else
         {
-            pieces[square] = piece::get_piece_from_symbol(current_char);
+            pieces[square] = notation::get_piece_from_letter(current_char);
             hasher::update_square(hash, square, pieces[square]);
             square++;
         }
@@ -141,7 +142,7 @@ void Board::make_move(Move move)
 
     PositionInfo new_position_info = 0;
     position_info::set_castling_rights(new_position_info,
-                                      position_info::get_castling_rights(position_info));
+                                       position_info::get_castling_rights(position_info));
     Square start_square = move::get_start_square(move);
     Square target_square = move::get_target_square(move);
     int move_flag = move::get_flag(move);
