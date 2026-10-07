@@ -66,30 +66,11 @@ int MoveGenerator::perft(int depth)
 
 void MoveGenerator::init_bitboards()
 {
-    bitboard::clear_all(friendly_pieces_bb);
-    bitboard::clear_all(enemy_pieces_bb);
-    bitboard::clear_all(all_pieces_bb);
-    bitboard::clear_all(friendly_king_bb);
-    for (Square square = 0; square < square::TOTAL_SQUARES; square++)
-    {
-        if (board.is_occupied(square))
-        {
-            bitboard::set_square(all_pieces_bb, square);
-            if (board.get_piece_color(square) ==
-                position_info::get_to_move(board.get_position_info()))
-            {
-                bitboard::set_square(friendly_pieces_bb, square);
-                if (board.get_piece_type(square) == piece::KING)
-                {
-                    bitboard::set_square(friendly_king_bb, square);
-                }
-            }
-            else
-            {
-                bitboard::set_square(enemy_pieces_bb, square);
-            }
-        }
-    }
+    Color to_move = position_info::get_to_move(board.get_position_info());
+    friendly_pieces_bb = board.get_color_bb(to_move);
+    enemy_pieces_bb = board.get_color_bb(piece::get_other_color(to_move));
+    all_pieces_bb = friendly_pieces_bb | enemy_pieces_bb;
+    friendly_king_bb = board.get_piece_bb(piece::KING, to_move);
 
     update_attacks();
 
@@ -153,8 +134,7 @@ void MoveGenerator::add_pawn_moves(MoveList& moves, Square square, Color color) 
         }
     }
 
-    Bitboard pseudo_legal_moves_bb =
-        precomputations::pawn_attacks[color][square] & enemy_pieces_bb;
+    Bitboard pseudo_legal_moves_bb = precomputations::pawn_attacks[color][square] & enemy_pieces_bb;
     Bitboard legal_moves_bb = get_legal_squares(pseudo_legal_moves_bb);
     while (legal_moves_bb != 0)
     {
@@ -188,8 +168,7 @@ void MoveGenerator::add_pawn_move(MoveList& moves, Square start_square, Square t
 
 void MoveGenerator::add_knight_moves(MoveList& moves, Square square) const
 {
-    Bitboard pseudo_legal_moves_bb =
-        precomputations::knight_moves[square] & (~friendly_pieces_bb);
+    Bitboard pseudo_legal_moves_bb = precomputations::knight_moves[square] & (~friendly_pieces_bb);
     Bitboard legal_moves_bb = get_legal_squares(pseudo_legal_moves_bb);
     move::add_moves_from_bitboard(moves, square, legal_moves_bb);
 }

@@ -3,6 +3,7 @@
 #include <sstream>
 #include <string>
 
+#include "bitboard.hpp"
 #include "hasher.hpp"
 #include "move.hpp"
 #include "notation.hpp"
@@ -35,7 +36,6 @@ void Board::load_position(const std::string& fen)
     stream >> fen_info[0] >> fen_info[1] >> fen_info[2] >> fen_info[3] >> fen_info[4] >>
         fen_info[5];
 
-    // Getting pieces
     Square square = 56;
     for (char current_char : fen_info[0])
     {
@@ -50,13 +50,13 @@ void Board::load_position(const std::string& fen)
         }
         else
         {
-            pieces[square] = notation::get_piece_from_letter(current_char);
-            hasher::update_square(hash, square, pieces[square]);
+            Piece piece = notation::get_piece_from_letter(current_char);
+            place_piece(square, piece);
+            hasher::update_square(hash, square, piece);
             square++;
         }
     }
 
-    // Getting to_move color
     if (fen_info[1] == "w")
     {
         position_info::set_to_move(position_info, piece::WHITE);
@@ -67,7 +67,6 @@ void Board::load_position(const std::string& fen)
         position_info::set_to_move(position_info, piece::BLACK);
     }
 
-    // Getting castling rights
     for (char current_char : fen_info[2])
     {
         switch (current_char)
@@ -89,22 +88,14 @@ void Board::load_position(const std::string& fen)
         }
     }
 
-    // Getting en passant
     if (!fen_info[3].empty() && fen_info[3] != "-")
     {
         position_info::set_en_passant(position_info, true, fen_info[3][0] - 'a');
     }
 
-    // Getting fifty move rule half-moves
     if (!fen_info[4].empty())
     {
         position_info::set_fifty_move_ply(position_info, std::stoi(fen_info[4]));
-    }
-
-    // Getting full moves
-    if (!fen_info[5].empty())
-    {
-        // Full moves of the game
     }
 
     previous_positions.push(position_info);
@@ -130,10 +121,26 @@ PieceType Board::get_piece_type(Square square) const
     return piece::get_piece_type(pieces[square]);
 }
 
+void Board::place_piece(Square square, Piece piece)
+{
+    pieces[square] = piece;
+    bitboard::set_square(piece_type_bbs[piece::get_piece_type(piece)], square);
+    bitboard::set_square(color_bbs[piece::get_piece_color(piece)], square);
+}
+
+void Board::remove_piece(Square square)
+{
+    Piece piece = pieces[square];
+    bitboard::clear_square(piece_type_bbs[piece::get_piece_type(piece)], square);
+    bitboard::clear_square(color_bbs[piece::get_piece_color(piece)], square);
+    pieces[square] = piece::NONE;
+}
+
 void Board::move_piece(Square start_square, Square target_square)
 {
-    pieces[target_square] = pieces[start_square];
-    pieces[start_square] = piece::NONE;
+    remove_piece(target_square);
+    place_piece(target_square, pieces[start_square]);
+    remove_piece(start_square);
 }
 
 void Board::make_move(Move move)
@@ -158,7 +165,7 @@ void Board::make_move(Move move)
         Square en_passant_capture_square =
             get_en_passant_capture_square(start_square, target_square);
         hasher::update_square(hash, en_passant_capture_square, pieces[en_passant_capture_square]);
-        pieces[en_passant_capture_square] = piece::NONE;
+        remove_piece(en_passant_capture_square);
     }
 
     if (move_flag == move::TWO_SPACE_PAWN_MOVE_FLAG)
@@ -170,16 +177,14 @@ void Board::make_move(Move move)
     {
         if (target_square == start_square + 2)
         {
-            // Short castle
             hasher::update_square(hash, start_square + 3, pieces[start_square + 3]);
-            move_piece(start_square + 3, start_square + 1); // Moves rook
+            move_piece(start_square + 3, start_square + 1);
             hasher::update_square(hash, start_square + 1, pieces[start_square + 1]);
         }
         if (target_square == start_square - 2)
         {
-            // Long castle
             hasher::update_square(hash, start_square - 4, pieces[start_square - 4]);
-            move_piece(start_square - 4, start_square - 1); // Moves rook
+            move_piece(start_square - 4, start_square - 1);
             hasher::update_square(hash, start_square - 1, pieces[start_square - 1]);
         }
         position_info::set_castling_right(new_position_info, moving_color, true, false);
@@ -193,7 +198,8 @@ void Board::make_move(Move move)
     if (move::is_pawn_promotion(move))
     {
         PieceType promoted_piece_type = move::get_pawn_promotion_piece_type(move);
-        pieces[target_square] = piece::create_piece(promoted_piece_type, moving_color);
+        remove_piece(target_square);
+        place_piece(target_square, piece::create_piece(promoted_piece_type, moving_color));
     }
 
     hasher::update_square(hash, target_square, pieces[target_square]);
@@ -266,8 +272,9 @@ void Board::unmake_move(Move move)
 
     if (move::is_pawn_promotion(move))
     {
-        pieces[target_square] =
-            piece::create_piece(piece::PAWN, position_info::get_to_move(previous_position_info));
+        remove_piece(target_square);
+        place_piece(target_square, piece::create_piece(piece::PAWN, position_info::get_to_move(
+                                                                        previous_position_info)));
     }
 
     move_piece(target_square, start_square);
@@ -277,12 +284,12 @@ void Board::unmake_move(Move move)
     {
         if (move_flag == move::EN_PASSANT_FLAG)
         {
-            pieces[get_en_passant_capture_square(start_square, target_square)] =
-                position_info::get_captured_piece(position_info);
+            Square square = get_en_passant_capture_square(start_square, target_square);
+            place_piece(square, position_info::get_captured_piece(position_info));
         }
         else
         {
-            pieces[target_square] = position_info::get_captured_piece(position_info);
+            place_piece(target_square, position_info::get_captured_piece(position_info));
         }
     }
 
@@ -290,13 +297,11 @@ void Board::unmake_move(Move move)
     {
         if (target_square == start_square + 2)
         {
-            // Short castle
-            move_piece(start_square + 1, start_square + 3); // Moves rook
+            move_piece(start_square + 1, start_square + 3);
         }
         if (target_square == start_square - 2)
         {
-            // Long castle
-            move_piece(start_square - 1, start_square - 4); // Moves rook
+            move_piece(start_square - 1, start_square - 4);
         }
     }
     position_info = previous_position_info;
@@ -305,6 +310,8 @@ void Board::unmake_move(Move move)
 void Board::reset()
 {
     pieces.fill(piece::NONE);
+    piece_type_bbs.fill(0);
+    color_bbs.fill(0);
     position_info = 0;
     previous_positions = {};
     hash = 0;

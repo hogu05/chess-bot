@@ -34,6 +34,16 @@ class Board
 
     Piece get_captured_piece(Move move) const;
 
+    constexpr Bitboard get_color_bb(Color color) const
+    {
+        return color_bbs[color];
+    }
+
+    constexpr Bitboard get_piece_bb(PieceType piece_type, Color color) const
+    {
+        return piece_type_bbs[piece_type] & color_bbs[color];
+    }
+
     bool is_threefold_repetition() const;
 
   private:
@@ -42,11 +52,17 @@ class Board
     static constexpr std::array<Square, piece::COLORS> KINGSIDE_ROOK_START_SQUARE = {square::h1, square::h8};
 
     std::array<Piece, square::TOTAL_SQUARES> pieces{};
+    std::array<Bitboard, piece::PIECE_TYPE_COUNT + 1> piece_type_bbs{};
+    std::array<Bitboard, piece::COLORS> color_bbs{};
     PositionInfo position_info = 0;
     std::stack<PositionInfo> previous_positions;
     std::stack<uint64_t> previous_hashes;
     std::unordered_map<uint64_t, int> hash_count;
     uint64_t hash = 0;
+
+    void place_piece(Square square, Piece piece);
+
+    void remove_piece(Square square);
 
     void move_piece(Square start_square, Square target_square);
 
