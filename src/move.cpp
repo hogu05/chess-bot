@@ -21,15 +21,13 @@ Move create_move(Move move, int flag)
     return move;
 }
 
-std::vector<Move> create_moves_from_bitboard(Square start_square, Bitboard bitboard)
+void add_moves_from_bitboard(MoveList& moves, Square start_square, Bitboard bitboard)
 {
-    std::vector<Move> moves;
     while (bitboard != 0)
     {
         Square target_square = bitboard::pop_square(bitboard);
         moves.push_back(create_move(start_square, target_square, NO_FLAG));
     }
-    return moves;
 }
 
 Square get_start_square(Move move)

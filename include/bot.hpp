@@ -4,16 +4,15 @@
 #include <atomic>
 #include <chrono>
 #include <string>
-#include <vector>
 
 #include "board.hpp"
 #include "move_generator.hpp"
+#include "move_list.hpp"
 #include "types.hpp"
 
 class Bot
 {
   public:
-    // Searches until stopped or the deadline passes; returns move::NONE_MOVE if there is no legal move
     Move go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point deadline);
     Board& get_board();
     MoveGenerator& get_move_generator();
@@ -24,7 +23,6 @@ class Bot
     static constexpr int STALEMATE_SCORE = 0;
     static constexpr int THREEFOLD_REPETITION_SCORE = 0;
     static constexpr int INF = 1000000;
-    // How often (in searched nodes) the clock is checked against the deadline
     static constexpr int DEADLINE_CHECK_INTERVAL = 2048;
 
     Board board;
@@ -33,7 +31,7 @@ class Bot
     std::uint64_t searched_nodes = 0;
     int search(int depth, int alpha, int beta, bool is_quiescence, std::atomic<bool>& stop);
     int get_move_priority(Move move) const;
-    void order_moves(std::vector<Move>& moves) const;
+    void order_moves(MoveList& moves) const;
     bool is_noisy(Move move) const;
 };
 

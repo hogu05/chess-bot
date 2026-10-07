@@ -12,13 +12,13 @@ MoveGenerator::MoveGenerator(Board& board) : board(board)
 {
 }
 
-std::vector<Move> MoveGenerator::get_moves()
+MoveList MoveGenerator::get_moves()
 {
     en_passant_square =
         Board::get_en_passant_square(position_info::get_en_passant_file(board.get_position_info()),
                                      position_info::get_to_move(board.get_position_info()));
     init_bitboards();
-    std::vector<Move> moves;
+    MoveList moves;
     if (!is_double_check)
     {
         Bitboard moving_pieces_bb = friendly_pieces_bb;
@@ -30,13 +30,12 @@ std::vector<Move> MoveGenerator::get_moves()
             {
                 pinned_piece_possible_squares_bb = get_pinned_piece_possible_squares(square);
             }
-            std::vector<Move> piece_moves = get_piece_moves(square);
-            moves.insert(moves.end(), piece_moves.begin(), piece_moves.end());
+            add_piece_moves(moves, square);
         }
     }
     else
     {
-        moves = get_piece_moves(bitboard::get_square(friendly_king_bb));
+        add_piece_moves(moves, bitboard::get_square(friendly_king_bb));
     }
     return moves;
 }
@@ -48,10 +47,10 @@ bool MoveGenerator::is_check() const
 
 int MoveGenerator::perft(int depth)
 {
-    std::vector<Move> moves = get_moves();
+    MoveList moves = get_moves();
     if (depth == 1)
     {
-        return static_cast<int>(moves.size());
+        return moves.size();
     }
 
     int nodes = 0;
@@ -107,38 +106,41 @@ void MoveGenerator::init_bitboards()
     }
 }
 
-std::vector<Move> MoveGenerator::get_piece_moves(Square square) const
+void MoveGenerator::add_piece_moves(MoveList& moves, Square square) const
 {
     PieceType piece_type = board.get_piece_type(square);
     Color color = board.get_piece_color(square);
     switch (piece_type)
     {
     case piece::PAWN:
-        return get_pawn_moves(square, color);
+        add_pawn_moves(moves, square, color);
+        break;
     case piece::KNIGHT:
-        return get_knight_moves(square);
+        add_knight_moves(moves, square);
+        break;
     case piece::BISHOP:
     case piece::ROOK:
     case piece::QUEEN:
-        return get_sliding_piece_moves(square, piece_type);
+        add_sliding_piece_moves(moves, square, piece_type);
+        break;
     case piece::KING:
-        return get_king_moves(square, color);
+        add_king_moves(moves, square, color);
+        break;
     default:
-        return {};
+        break;
     }
 }
 
-std::vector<Move> MoveGenerator::get_pawn_moves(Square square, Color color) const
+void MoveGenerator::add_pawn_moves(MoveList& moves, Square square, Color color) const
 {
-    std::vector<Move> moves;
-
     Direction direction = directions::pawn_directions[color];
+    bool is_promotion = piece::can_pawn_promote(square, color);
 
     if (bitboard::is_clear(all_pieces_bb, square + direction))
     {
         if (get_legal_squares(bitboard::create_bitboard(square + direction)) != 0)
         {
-            moves.push_back(move::create_move(square, square + direction, move::NO_FLAG));
+            add_pawn_move(moves, square, square + direction, move::NO_FLAG, is_promotion);
         }
         if (piece::can_pawn_move_two_spaces(square, color) &&
             bitboard::is_clear(all_pieces_bb, square + (direction * 2)))
@@ -154,8 +156,11 @@ std::vector<Move> MoveGenerator::get_pawn_moves(Square square, Color color) cons
     Bitboard pseudo_legal_moves_bb =
         precomputations::pawn_attacks[color][square] & enemy_pieces_bb;
     Bitboard legal_moves_bb = get_legal_squares(pseudo_legal_moves_bb);
-    std::vector<Move> legal_moves = move::create_moves_from_bitboard(square, legal_moves_bb);
-    moves.insert(moves.end(), legal_moves.begin(), legal_moves.end());
+    while (legal_moves_bb != 0)
+    {
+        add_pawn_move(moves, square, bitboard::pop_square(legal_moves_bb), move::NO_FLAG,
+                      is_promotion);
+    }
 
     if (en_passant_square != -1 &&
         bitboard::is_set(precomputations::pawn_attacks[color][square], en_passant_square))
@@ -165,37 +170,31 @@ std::vector<Move> MoveGenerator::get_pawn_moves(Square square, Color color) cons
             moves.push_back(move::create_move(square, en_passant_square, move::EN_PASSANT_FLAG));
         }
     }
-
-    if (piece::can_pawn_promote(square, color))
-    {
-        moves = get_pawn_promotion_moves(moves);
-    }
-
-    return moves;
 }
 
-std::vector<Move> MoveGenerator::get_pawn_promotion_moves(const std::vector<Move>& moves)
+void MoveGenerator::add_pawn_move(MoveList& moves, Square start_square, Square target_square,
+                                  int flag, bool is_promotion)
 {
-    std::vector<Move> promotion_moves;
-    for (Move move : moves)
+    if (!is_promotion)
     {
-        promotion_moves.push_back(move::create_move(move, move::PROMOTE_TO_QUEEN_FLAG));
-        promotion_moves.push_back(move::create_move(move, move::PROMOTE_TO_ROOK_FLAG));
-        promotion_moves.push_back(move::create_move(move, move::PROMOTE_TO_BISHOP_FLAG));
-        promotion_moves.push_back(move::create_move(move, move::PROMOTE_TO_KNIGHT_FLAG));
+        moves.push_back(move::create_move(start_square, target_square, flag));
+        return;
     }
-    return promotion_moves;
+    moves.push_back(move::create_move(start_square, target_square, move::PROMOTE_TO_QUEEN_FLAG));
+    moves.push_back(move::create_move(start_square, target_square, move::PROMOTE_TO_ROOK_FLAG));
+    moves.push_back(move::create_move(start_square, target_square, move::PROMOTE_TO_BISHOP_FLAG));
+    moves.push_back(move::create_move(start_square, target_square, move::PROMOTE_TO_KNIGHT_FLAG));
 }
 
-std::vector<Move> MoveGenerator::get_knight_moves(Square square) const
+void MoveGenerator::add_knight_moves(MoveList& moves, Square square) const
 {
     Bitboard pseudo_legal_moves_bb =
         precomputations::knight_moves[square] & (~friendly_pieces_bb);
     Bitboard legal_moves_bb = get_legal_squares(pseudo_legal_moves_bb);
-    return move::create_moves_from_bitboard(square, legal_moves_bb);
+    move::add_moves_from_bitboard(moves, square, legal_moves_bb);
 }
 
-std::vector<Move> MoveGenerator::get_sliding_piece_moves(Square square, Piece piece) const
+void MoveGenerator::add_sliding_piece_moves(MoveList& moves, Square square, Piece piece) const
 {
     Bitboard pseudo_legal_moves_bb = 0;
 
@@ -228,14 +227,14 @@ std::vector<Move> MoveGenerator::get_sliding_piece_moves(Square square, Piece pi
         }
     }
     Bitboard legal_moves_bb = get_legal_squares(pseudo_legal_moves_bb);
-    return move::create_moves_from_bitboard(square, legal_moves_bb);
+    move::add_moves_from_bitboard(moves, square, legal_moves_bb);
 }
 
-std::vector<Move> MoveGenerator::get_king_moves(Square square, Color color) const
+void MoveGenerator::add_king_moves(MoveList& moves, Square square, Color color) const
 {
     Bitboard pseudo_legal_moves_bb = precomputations::king_moves[square] & (~friendly_pieces_bb);
     Bitboard legal_moves_bb = pseudo_legal_moves_bb & (~attacked_squares_bb);
-    std::vector<Move> moves = move::create_moves_from_bitboard(square, legal_moves_bb);
+    move::add_moves_from_bitboard(moves, square, legal_moves_bb);
 
     if (checking_piece_bb == 0)
     {
@@ -262,8 +261,6 @@ std::vector<Move> MoveGenerator::get_king_moves(Square square, Color color) cons
             }
         }
     }
-
-    return moves;
 }
 
 void MoveGenerator::update_attacks()

@@ -1,9 +1,8 @@
 #ifndef MOVE_H
 #define MOVE_H
 
-#include <vector>
-
 #include "bit_utils.hpp"
+#include "move_list.hpp"
 #include "types.hpp"
 
 namespace move
@@ -34,7 +33,7 @@ Move create_move(Square start_square, Square target_square, int flag);
 
 Move create_move(Move move, int flag);
 
-std::vector<Move> create_moves_from_bitboard(Square start_square, Bitboard bitboard);
+void add_moves_from_bitboard(MoveList& moves, Square start_square, Bitboard bitboard);
 
 Square get_start_square(Move move);
 

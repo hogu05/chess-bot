@@ -1,0 +1,41 @@
+#ifndef MOVE_LIST_H
+#define MOVE_LIST_H
+
+#include <array>
+
+#include "types.hpp"
+
+class MoveList
+{
+  public:
+    constexpr void push_back(Move move)
+    {
+        moves[count++] = move;
+    }
+
+    constexpr int size() const
+    {
+        return count;
+    }
+
+    constexpr bool empty() const
+    {
+        return count == 0;
+    }
+
+    constexpr Move* begin()
+    {
+        return moves.data();
+    }
+
+    constexpr Move* end()
+    {
+        return moves.data() + count;
+    }
+
+  private:
+    std::array<Move, 256> moves;
+    int count = 0;
+};
+
+#endif

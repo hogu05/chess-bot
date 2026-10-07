@@ -1,8 +1,7 @@
 #ifndef MOVE_GENERATOR_H
 #define MOVE_GENERATOR_H
 
-#include <vector>
-
+#include "move_list.hpp"
 #include "types.hpp"
 
 class Board;
@@ -14,7 +13,7 @@ class MoveGenerator
     MoveGenerator(const MoveGenerator&) = delete;
     MoveGenerator& operator=(const MoveGenerator&) = delete;
 
-    std::vector<Move> get_moves();
+    MoveList get_moves();
 
     bool is_check() const;
 
@@ -36,17 +35,18 @@ class MoveGenerator
 
     bool is_double_check = false;
 
-    std::vector<Move> get_piece_moves(Square square) const;
+    void add_piece_moves(MoveList& moves, Square square) const;
 
-    std::vector<Move> get_pawn_moves(Square square, Color color) const;
+    void add_pawn_moves(MoveList& moves, Square square, Color color) const;
 
-    std::vector<Move> get_knight_moves(Square square) const;
+    static void add_pawn_move(MoveList& moves, Square start_square, Square target_square, int flag,
+                              bool is_promotion);
 
-    std::vector<Move> get_sliding_piece_moves(Square square, Piece piece) const;
+    void add_knight_moves(MoveList& moves, Square square) const;
 
-    std::vector<Move> get_king_moves(Square square, Color color) const;
+    void add_sliding_piece_moves(MoveList& moves, Square square, Piece piece) const;
 
-    static std::vector<Move> get_pawn_promotion_moves(const std::vector<Move>& moves);
+    void add_king_moves(MoveList& moves, Square square, Color color) const;
 
     void init_bitboards();
 

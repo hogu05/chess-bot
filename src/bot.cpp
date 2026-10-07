@@ -4,7 +4,6 @@
 #include <atomic>
 #include <chrono>
 #include <unordered_map>
-#include <vector>
 
 #include "evaluator.hpp"
 #include "move.hpp"
@@ -15,19 +14,19 @@ Move Bot::go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point dead
     search_deadline = deadline;
     searched_nodes = 0;
 
-    std::vector<Move> legal_moves = move_generator.get_moves();
+    MoveList legal_moves = move_generator.get_moves();
     if (legal_moves.empty())
     {
         return move::NONE_MOVE;
     }
 
-    Move best_move = legal_moves[0];
+    Move best_move = *legal_moves.begin();
     std::unordered_map<Move, int> root_move_scores;
 
     for (int depth = 1; !stop; depth++)
     {
         int best_score = -INF;
-        std::vector<Move> root_moves = move_generator.get_moves();
+        MoveList root_moves = move_generator.get_moves();
 
         std::sort(root_moves.begin(), root_moves.end(),
                   [&](Move a, Move b) { return root_move_scores[a] > root_move_scores[b]; });
@@ -90,7 +89,7 @@ int Bot::search(int depth, int alpha, int beta, bool is_quiescence, std::atomic<
         alpha = std::max(alpha, static_score);
     }
 
-    std::vector<Move> moves = move_generator.get_moves();
+    MoveList moves = move_generator.get_moves();
     order_moves(moves);
 
     bool found_move = false;
@@ -147,7 +146,7 @@ int Bot::get_move_priority(Move move) const
     return priority;
 }
 
-void Bot::order_moves(std::vector<Move>& moves) const
+void Bot::order_moves(MoveList& moves) const
 {
     std::sort(moves.begin(), moves.end(), [this](const Move& move_1, const Move& move_2)
               { return get_move_priority(move_1) > get_move_priority(move_2); });
