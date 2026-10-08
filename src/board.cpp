@@ -1,5 +1,7 @@
 #include "board.hpp"
 
+#include <algorithm>
+#include <cassert>
 #include <sstream>
 #include <string>
 
@@ -89,12 +91,9 @@ void Board::load_position(const std::string& fen)
         position_info::set_fifty_move_ply(position_info, std::stoi(fen_info[4]));
     }
 
-    previous_positions.push(position_info);
-
     hasher::update_to_move(hash, position_info::get_to_move(position_info));
     hasher::update_castling_rights(hash, position_info);
     hasher::update_en_passant(hash, position_info::get_en_passant_file(position_info));
-    hash_count[hash]++;
 }
 
 bool Board::is_occupied(Square square) const
@@ -136,7 +135,10 @@ void Board::move_piece(Square start_square, Square target_square)
 
 void Board::make_move(Move move)
 {
-    previous_hashes.push(hash);
+    assert(ply < MAX_PLIES);
+    previous_hashes[ply] = hash;
+    previous_positions[ply] = position_info;
+    ply++;
 
     PositionInfo new_position_info = 0;
     position_info::set_castling_rights(new_position_info,
@@ -150,6 +152,17 @@ void Board::make_move(Move move)
     position_info::set_to_move(new_position_info, next_move_color);
 
     position_info::set_captured_piece(new_position_info, get_captured_piece(move));
+
+    if (get_piece_type(start_square) == piece::PAWN || get_captured_piece(move) != piece::NONE)
+    {
+        position_info::set_fifty_move_ply(new_position_info, 0);
+    }
+    else
+    {
+        position_info::set_fifty_move_ply(
+            new_position_info, std::min(position_info::get_fifty_move_ply(position_info) + 1,
+                                        position_info::MAX_FIFTY_MOVES_PLY));
+    }
 
     if (move_flag == move::EN_PASSANT_FLAG)
     {
@@ -242,9 +255,6 @@ void Board::make_move(Move move)
     {
         hasher::update_en_passant(hash, position_info::get_en_passant_file(new_position_info));
     }
-    hash_count[hash]++;
-
-    previous_positions.push(position_info);
     position_info = new_position_info;
 }
 
@@ -254,12 +264,9 @@ void Board::unmake_move(Move move)
     Square target_square = move::get_target_square(move);
     int move_flag = move::get_flag(move);
 
-    PositionInfo previous_position_info = previous_positions.top();
-    previous_positions.pop();
-
-    hash_count[hash]--;
-    hash = previous_hashes.top();
-    previous_hashes.pop();
+    ply--;
+    PositionInfo previous_position_info = previous_positions[ply];
+    hash = previous_hashes[ply];
 
     if (move::is_pawn_promotion(move))
     {
@@ -304,10 +311,8 @@ void Board::reset()
     piece_type_bbs.fill(0);
     color_bbs.fill(0);
     position_info = 0;
-    previous_positions = {};
     hash = 0;
-    previous_hashes = {};
-    hash_count.clear();
+    ply = 0;
 }
 
 Piece Board::get_captured_piece(Move move) const
@@ -329,6 +334,14 @@ const std::array<Piece, square::TOTAL_SQUARES>& Board::get_pieces() const
 
 bool Board::is_threefold_repetition() const
 {
-    auto it = hash_count.find(hash);
-    return it != hash_count.end() && it->second >= 3;
+    int oldest_ply = std::max(ply - position_info::get_fifty_move_ply(position_info), 0);
+    int count = 1;
+    for (int i = ply - 2; i >= oldest_ply; i -= 2)
+    {
+        if (previous_hashes[i] == hash)
+        {
+            count++;
+        }
+    }
+    return count >= 3;
 }

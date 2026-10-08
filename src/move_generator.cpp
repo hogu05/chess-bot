@@ -6,6 +6,7 @@
 #include "board.hpp"
 #include "color.hpp"
 #include "directions.hpp"
+#include "magic.hpp"
 #include "move.hpp"
 #include "piece.hpp"
 #include "precomputations.hpp"
@@ -186,38 +187,12 @@ void MoveGenerator::add_knight_moves(MoveList& moves, Square square) const
     move::add_moves_from_bitboard(moves, square, legal_moves_bb);
 }
 
-void MoveGenerator::add_sliding_piece_moves(MoveList& moves, Square square, Piece piece) const
+void MoveGenerator::add_sliding_piece_moves(MoveList& moves, Square square,
+                                            PieceType piece_type) const
 {
-    Bitboard pseudo_legal_moves_bb = 0;
-
-    int start_index = 0;
-    int end_index = directions::sliding_directions.size() - 1;
-    if (piece == piece::BISHOP)
-    {
-        start_index = directions::LAST_ORTHOGONAL_DIRECTION_INDEX + 1;
-    }
-    if (piece == piece::ROOK)
-    {
-        end_index = directions::LAST_ORTHOGONAL_DIRECTION_INDEX;
-    }
-
-    for (int direction_index = start_index; direction_index <= end_index; direction_index++)
-    {
-        Direction direction = directions::sliding_directions[direction_index];
-        for (int i = 1; i <= precomputations::get_squares_to_edge(square, direction); i++)
-        {
-            Square target_square = square + (direction * i);
-            if (bitboard::is_set(board.get_all_pieces_bb(), target_square))
-            {
-                if (bitboard::is_set(get_enemy_pieces_bb(), target_square))
-                {
-                    bitboard::set_square(pseudo_legal_moves_bb, target_square);
-                }
-                break;
-            }
-            bitboard::set_square(pseudo_legal_moves_bb, target_square);
-        }
-    }
+    Bitboard pseudo_legal_moves_bb =
+        magic::get_slider_attacks(square, piece_type, board.get_all_pieces_bb()) &
+        ~get_friendly_pieces_bb();
     Bitboard legal_moves_bb = get_legal_squares(pseudo_legal_moves_bb);
     move::add_moves_from_bitboard(moves, square, legal_moves_bb);
 }
@@ -309,36 +284,11 @@ Bitboard MoveGenerator::get_knight_attacks(Square square)
     return precomputations::knight_moves[square];
 }
 
-Bitboard MoveGenerator::get_sliding_piece_attacks(Square square, Piece piece) const
+Bitboard MoveGenerator::get_sliding_piece_attacks(Square square, PieceType piece_type) const
 {
-    Bitboard attacks = 0;
-
-    int start_index = 0;
-    int end_index = directions::sliding_directions.size() - 1;
-    if (piece == piece::BISHOP)
-    {
-        start_index = directions::LAST_ORTHOGONAL_DIRECTION_INDEX + 1;
-    }
-    if (piece == piece::ROOK)
-    {
-        end_index = directions::LAST_ORTHOGONAL_DIRECTION_INDEX;
-    }
-
-    for (int direction_index = start_index; direction_index <= end_index; direction_index++)
-    {
-        Direction direction = directions::sliding_directions[direction_index];
-        for (int i = 1; i <= precomputations::get_squares_to_edge(square, direction); i++)
-        {
-            Square target_square = square + (direction * i);
-            bitboard::set_square(attacks, target_square);
-            if (bitboard::is_set(board.get_all_pieces_bb(), target_square) &&
-                target_square != get_friendly_king_square())
-            {
-                break;
-            }
-        }
-    }
-    return attacks;
+    return magic::get_slider_attacks(square, piece_type,
+                                     board.get_all_pieces_bb() &
+                                         ~bitboard::create_bitboard(get_friendly_king_square()));
 }
 
 Bitboard MoveGenerator::get_king_attacks(Square square)

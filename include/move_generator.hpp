@@ -39,7 +39,7 @@ class MoveGenerator
 
     void add_knight_moves(MoveList& moves, Square square) const;
 
-    void add_sliding_piece_moves(MoveList& moves, Square square, Piece piece) const;
+    void add_sliding_piece_moves(MoveList& moves, Square square, PieceType piece_type) const;
 
     void add_king_moves(MoveList& moves, Square square, Color color) const;
 
@@ -57,7 +57,7 @@ class MoveGenerator
 
     static Bitboard get_knight_attacks(Square square);
 
-    Bitboard get_sliding_piece_attacks(Square square, Piece piece) const;
+    Bitboard get_sliding_piece_attacks(Square square, PieceType piece_type) const;
 
     static Bitboard get_king_attacks(Square square);
 
