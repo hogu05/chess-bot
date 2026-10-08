@@ -81,9 +81,9 @@ class Board
         return position_info::get_fifty_move_ply(position_info);
     }
 
-    constexpr bool get_castling_right(Color color, bool short_castle) const
+    constexpr bool get_castling_right(Color color, bool kingside) const
     {
-        return position_info::get_castling_right(position_info, color, short_castle);
+        return position_info::get_castling_right(position_info, color, kingside);
     }
 
     constexpr Square get_en_passant_square() const

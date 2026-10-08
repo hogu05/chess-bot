@@ -40,11 +40,11 @@ constexpr int get_direction_index(Direction direction)
         return 3;
     case NORTH_EAST:
         return 4;
-    case NORTH_WEST:
-        return 5;
     case SOUTH_EAST:
-        return 6;
+        return 5;
     case SOUTH_WEST:
+        return 6;
+    case NORTH_WEST:
         return 7;
     default:
         return -1;

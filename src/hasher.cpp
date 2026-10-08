@@ -19,10 +19,10 @@ struct Keys
                piece::PIECE_TYPE_COUNT * color::COLORS>
         piece_keys;
     std::uint64_t to_move_key;
-    std::uint64_t white_short_castle_key;
-    std::uint64_t white_long_castle_key;
-    std::uint64_t black_short_castle_key;
-    std::uint64_t black_long_castle_key;
+    std::uint64_t white_kingside_castle_key;
+    std::uint64_t white_queenside_castle_key;
+    std::uint64_t black_kingside_castle_key;
+    std::uint64_t black_queenside_castle_key;
     std::array<std::uint64_t, square::FILES + 1> en_passant_keys;
 };
 
@@ -41,10 +41,10 @@ Keys generate_keys()
     }
     keys.to_move_key = distribution(generator);
 
-    keys.white_short_castle_key = distribution(generator);
-    keys.white_long_castle_key = distribution(generator);
-    keys.black_short_castle_key = distribution(generator);
-    keys.black_long_castle_key = distribution(generator);
+    keys.white_kingside_castle_key = distribution(generator);
+    keys.white_queenside_castle_key = distribution(generator);
+    keys.black_kingside_castle_key = distribution(generator);
+    keys.black_queenside_castle_key = distribution(generator);
 
     for (std::uint64_t& key : keys.en_passant_keys)
     {
@@ -74,22 +74,22 @@ void update_castling_rights(std::uint64_t& hash, PositionInfo position_info)
 {
     if (position_info::get_castling_right(position_info, color::WHITE, true))
     {
-        hash ^= keys.white_short_castle_key;
+        hash ^= keys.white_kingside_castle_key;
     }
 
     if (position_info::get_castling_right(position_info, color::WHITE, false))
     {
-        hash ^= keys.white_long_castle_key;
+        hash ^= keys.white_queenside_castle_key;
     }
 
     if (position_info::get_castling_right(position_info, color::BLACK, true))
     {
-        hash ^= keys.black_short_castle_key;
+        hash ^= keys.black_kingside_castle_key;
     }
 
     if (position_info::get_castling_right(position_info, color::BLACK, false))
     {
-        hash ^= keys.black_long_castle_key;
+        hash ^= keys.black_queenside_castle_key;
     }
 }
 

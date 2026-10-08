@@ -32,9 +32,9 @@ compute_squares_to_edge()
             edges[directions::get_direction_index(directions::SOUTH)] = south;
             edges[directions::get_direction_index(directions::WEST)] = west;
             edges[directions::get_direction_index(directions::NORTH_EAST)] = std::min(north, east);
-            edges[directions::get_direction_index(directions::NORTH_WEST)] = std::min(north, west);
             edges[directions::get_direction_index(directions::SOUTH_EAST)] = std::min(south, east);
             edges[directions::get_direction_index(directions::SOUTH_WEST)] = std::min(south, west);
+            edges[directions::get_direction_index(directions::NORTH_WEST)] = std::min(north, west);
         }
     }
     return squares_to_edge;
