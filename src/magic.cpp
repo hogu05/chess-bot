@@ -23,8 +23,6 @@ struct Magic
     int offset;
 };
 
-using Magics = std::array<Magic, square::TOTAL_SQUARES>;
-
 constexpr std::array<Bitboard, square::TOTAL_SQUARES> ROOK_MAGIC_NUMBERS = {
     0x1080004008801020ULL, 0x0840092002C03000ULL, 0x1900200010400900ULL, 0x0880100008000480ULL,
     0x4200100420080200ULL, 0x8100020100080400ULL, 0x0200040110886200ULL, 0x0200008040220411ULL,
@@ -67,15 +65,15 @@ Bitboard compute_attacks(Square square, Bitboard pieces, bool is_rook)
 {
     Bitboard attacks = 0;
 
-    int start_index = is_rook ? 0 : directions::LAST_ORTHOGONAL_DIRECTION_INDEX + 1;
-    int end_index = is_rook ? directions::LAST_ORTHOGONAL_DIRECTION_INDEX
-                            : directions::sliding_directions.size() - 1;
+    const int start_index = is_rook ? 0 : directions::LAST_ORTHOGONAL_DIRECTION_INDEX + 1;
+    const int end_index = is_rook ? directions::LAST_ORTHOGONAL_DIRECTION_INDEX
+                                  : directions::sliding_directions.size() - 1;
     for (int direction_index = start_index; direction_index <= end_index; direction_index++)
     {
-        Direction direction = directions::sliding_directions[direction_index];
+        const Direction direction = directions::sliding_directions[direction_index];
         for (int i = 1; i <= precomputations::get_squares_to_edge(square, direction); i++)
         {
-            Square target_square = square + (direction * i);
+            const Square target_square = square + (direction * i);
             bitboard::set_square(attacks, target_square);
             if (bitboard::is_set(pieces, target_square))
             {
@@ -90,12 +88,12 @@ Bitboard compute_mask(Square square, bool is_rook)
 {
     Bitboard mask = 0;
 
-    int start_index = is_rook ? 0 : directions::LAST_ORTHOGONAL_DIRECTION_INDEX + 1;
-    int end_index = is_rook ? directions::LAST_ORTHOGONAL_DIRECTION_INDEX
-                            : directions::sliding_directions.size() - 1;
+    const int start_index = is_rook ? 0 : directions::LAST_ORTHOGONAL_DIRECTION_INDEX + 1;
+    const int end_index = is_rook ? directions::LAST_ORTHOGONAL_DIRECTION_INDEX
+                                  : directions::sliding_directions.size() - 1;
     for (int direction_index = start_index; direction_index <= end_index; direction_index++)
     {
-        Direction direction = directions::sliding_directions[direction_index];
+        const Direction direction = directions::sliding_directions[direction_index];
         for (int i = 1; i <= precomputations::get_squares_to_edge(square, direction) - 1; i++)
         {
             bitboard::set_square(mask, square + (direction * i));
@@ -104,34 +102,35 @@ Bitboard compute_mask(Square square, bool is_rook)
     return mask;
 }
 
-Magics compute_magics(const std::array<Bitboard, square::TOTAL_SQUARES>& magic_numbers,
-                      bool is_rook)
+std::array<Magic, square::TOTAL_SQUARES>
+compute_magics(const std::array<Bitboard, square::TOTAL_SQUARES>& magic_numbers, bool is_rook)
 {
-    Magics magics{};
+    std::array<Magic, square::TOTAL_SQUARES> magics{};
     int offset = 0;
-    for (Square square = 0; square < square::TOTAL_SQUARES; ++square)
+    for (Square square = 0; square < square::TOTAL_SQUARES; square++)
     {
-        Bitboard mask = compute_mask(square, is_rook);
-        int bits = std::popcount(mask);
+        const Bitboard mask = compute_mask(square, is_rook);
+        const int bits = std::popcount(mask);
         magics[square] = Magic(mask, magic_numbers[square], bits, offset);
         offset += 1 << bits;
     }
     return magics;
 }
 
-std::vector<Bitboard> compute_attack_table(const Magics& magics, bool is_rook)
+std::vector<Bitboard> compute_attack_table(const std::array<Magic, square::TOTAL_SQUARES>& magics,
+                                           bool is_rook)
 {
     std::vector<Bitboard> attack_table;
-    for (Square square = 0; square < square::TOTAL_SQUARES; ++square)
+    for (Square square = 0; square < square::TOTAL_SQUARES; square++)
     {
         const Magic& magic = magics[square];
         attack_table.resize(attack_table.size() + (1ULL << magic.bits));
         Bitboard blockers = 0;
-        for (std::size_t pattern = 0; pattern < (1ULL << magic.bits); ++pattern)
+        for (std::size_t pattern = 0; pattern < (1ULL << magic.bits); pattern++)
         {
-            std::size_t index = (blockers * magic.number) >> (64 - magic.bits);
-            Bitboard blocker_attacks = compute_attacks(square, blockers, is_rook);
-            Bitboard& slot = attack_table[magic.offset + index];
+            const Bitboard blocker_attacks = compute_attacks(square, blockers, is_rook);
+            Bitboard& slot =
+                attack_table[magic.offset + ((blockers * magic.number) >> (64 - magic.bits))];
             if (slot != 0 && slot != blocker_attacks)
             {
                 std::abort();
@@ -143,9 +142,11 @@ std::vector<Bitboard> compute_attack_table(const Magics& magics, bool is_rook)
     return attack_table;
 }
 
-const Magics rook_magics = compute_magics(ROOK_MAGIC_NUMBERS, true);
+const std::array<Magic, square::TOTAL_SQUARES> rook_magics =
+    compute_magics(ROOK_MAGIC_NUMBERS, true);
 
-const Magics bishop_magics = compute_magics(BISHOP_MAGIC_NUMBERS, false);
+const std::array<Magic, square::TOTAL_SQUARES> bishop_magics =
+    compute_magics(BISHOP_MAGIC_NUMBERS, false);
 
 const std::vector<Bitboard> rook_attacks = compute_attack_table(rook_magics, true);
 
@@ -153,8 +154,8 @@ const std::vector<Bitboard> bishop_attacks = compute_attack_table(bishop_magics,
 
 Bitboard lookup(const Magic& magic, const std::vector<Bitboard>& attack_table, Bitboard pieces)
 {
-    std::size_t index = ((pieces & magic.mask) * magic.number) >> (64 - magic.bits);
-    return attack_table[magic.offset + index];
+    return attack_table[magic.offset +
+                        (((pieces & magic.mask) * magic.number) >> (64 - magic.bits))];
 }
 } // namespace
 

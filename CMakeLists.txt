@@ -11,11 +11,7 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
 add_library(chess_core
     src/bot.cpp
     src/board.cpp
-    src/piece.cpp
     src/move_generator.cpp
-    src/move.cpp
-    src/directions.cpp
-    src/position_info.cpp
     src/evaluator.cpp
     src/piece_square_tables.cpp
     src/hasher.cpp

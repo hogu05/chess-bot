@@ -1,6 +1,7 @@
 #include "board.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <sstream>
 #include <string>
 
@@ -12,13 +13,6 @@
 #include "piece.hpp"
 #include "position_info.hpp"
 
-Square Board::get_en_passant_capture_square(Square start_square, Square target_square)
-{
-    int file = square::get_file(target_square);
-    int rank = square::get_rank(start_square);
-    return square::create_square(file, rank);
-}
-
 void Board::load_position(const std::string& fen)
 {
     reset();
@@ -28,12 +22,12 @@ void Board::load_position(const std::string& fen)
     stream >> fen_info[0] >> fen_info[1] >> fen_info[2] >> fen_info[3] >> fen_info[4] >>
         fen_info[5];
 
-    Square square = 56;
-    for (char current_char : fen_info[0])
+    Square square = square::a8;
+    for (const char current_char : fen_info[0])
     {
         if (current_char == '/')
         {
-            square -= 16;
+            square -= 2 * square::FILES;
             continue;
         }
         if (std::isdigit(current_char) != 0)
@@ -42,7 +36,7 @@ void Board::load_position(const std::string& fen)
         }
         else
         {
-            Piece piece = notation::get_piece_from_letter(current_char);
+            const Piece piece = notation::get_piece_from_letter(current_char);
             place_piece(square, piece);
             hasher::update_square(hash, square, piece);
             square++;
@@ -59,7 +53,7 @@ void Board::load_position(const std::string& fen)
         position_info::set_to_move(position_info, color::BLACK);
     }
 
-    for (char current_char : fen_info[2])
+    for (const char current_char : fen_info[2])
     {
         switch (current_char)
         {
@@ -90,49 +84,12 @@ void Board::load_position(const std::string& fen)
         position_info::set_fifty_move_ply(position_info, std::stoi(fen_info[4]));
     }
 
-    if (position_info::get_to_move(position_info) == color::BLACK)
+    if (get_to_move() == color::BLACK)
     {
         hasher::update_to_move(hash);
     }
     hasher::update_castling_rights(hash, position_info);
     hasher::update_en_passant(hash, position_info::get_en_passant_file(position_info));
-}
-
-bool Board::is_occupied(Square square) const
-{
-    return piece::get_piece_type(pieces[square]) != piece::NONE;
-}
-
-Color Board::get_piece_color(Square square) const
-{
-    return piece::get_piece_color(pieces[square]);
-}
-
-PieceType Board::get_piece_type(Square square) const
-{
-    return piece::get_piece_type(pieces[square]);
-}
-
-void Board::place_piece(Square square, Piece piece)
-{
-    pieces[square] = piece;
-    bitboard::set_square(piece_type_bbs[piece::get_piece_type(piece)], square);
-    bitboard::set_square(color_bbs[piece::get_piece_color(piece)], square);
-}
-
-void Board::remove_piece(Square square)
-{
-    Piece piece = pieces[square];
-    bitboard::clear_square(piece_type_bbs[piece::get_piece_type(piece)], square);
-    bitboard::clear_square(color_bbs[piece::get_piece_color(piece)], square);
-    pieces[square] = piece::NONE;
-}
-
-void Board::move_piece(Square start_square, Square target_square)
-{
-    remove_piece(target_square);
-    place_piece(target_square, pieces[start_square]);
-    remove_piece(start_square);
 }
 
 void Board::make_move(Move move)
@@ -141,34 +98,29 @@ void Board::make_move(Move move)
     previous_positions[ply] = position_info;
     ply++;
 
+    const Square start_square = move::get_start_square(move);
+    const Square target_square = move::get_target_square(move);
+    const int move_flag = move::get_flag(move);
+    const Color moving_color = get_to_move();
+    const Color next_move_color = color::get_other_color(moving_color);
+    const Piece captured_piece = get_captured_piece(move);
+
     PositionInfo new_position_info = 0;
     position_info::set_castling_rights(new_position_info,
                                        position_info::get_castling_rights(position_info));
-    Square start_square = move::get_start_square(move);
-    Square target_square = move::get_target_square(move);
-    int move_flag = move::get_flag(move);
-    Color moving_color = position_info::get_to_move(position_info);
-    Color next_move_color = color::get_other_color(moving_color);
-
     position_info::set_to_move(new_position_info, next_move_color);
-
-    position_info::set_captured_piece(new_position_info, get_captured_piece(move));
-
-    if (get_piece_type(start_square) == piece::PAWN || get_captured_piece(move) != piece::NONE)
-    {
-        position_info::set_fifty_move_ply(new_position_info, 0);
-    }
-    else
-    {
-        position_info::set_fifty_move_ply(new_position_info,
-                                          position_info::get_fifty_move_ply(position_info) + 1);
-    }
+    position_info::set_captured_piece(new_position_info, captured_piece);
+    position_info::set_fifty_move_ply(new_position_info,
+                                      get_piece_type(start_square) == piece::PAWN ||
+                                              captured_piece != piece::NONE
+                                          ? 0
+                                          : get_fifty_move_ply() + 1);
 
     if (move_flag == move::EN_PASSANT_FLAG)
     {
-        Square en_passant_capture_square =
+        const Square en_passant_capture_square =
             get_en_passant_capture_square(start_square, target_square);
-        hasher::update_square(hash, en_passant_capture_square, pieces[en_passant_capture_square]);
+        hasher::update_square(hash, en_passant_capture_square, squares[en_passant_capture_square]);
         remove_piece(en_passant_capture_square);
     }
 
@@ -181,65 +133,53 @@ void Board::make_move(Move move)
     {
         if (target_square == start_square + 2)
         {
-            hasher::update_square(hash, start_square + 3, pieces[start_square + 3]);
+            hasher::update_square(hash, start_square + 3, squares[start_square + 3]);
             move_piece(start_square + 3, start_square + 1);
-            hasher::update_square(hash, start_square + 1, pieces[start_square + 1]);
+            hasher::update_square(hash, start_square + 1, squares[start_square + 1]);
         }
         if (target_square == start_square - 2)
         {
-            hasher::update_square(hash, start_square - 4, pieces[start_square - 4]);
+            hasher::update_square(hash, start_square - 4, squares[start_square - 4]);
             move_piece(start_square - 4, start_square - 1);
-            hasher::update_square(hash, start_square - 1, pieces[start_square - 1]);
+            hasher::update_square(hash, start_square - 1, squares[start_square - 1]);
         }
         position_info::set_castling_right(new_position_info, moving_color, true, false);
         position_info::set_castling_right(new_position_info, moving_color, false, false);
     }
 
-    hasher::update_square(hash, target_square, pieces[target_square]);
-    hasher::update_square(hash, start_square, pieces[start_square]);
+    hasher::update_square(hash, target_square, squares[target_square]);
+    hasher::update_square(hash, start_square, squares[start_square]);
     move_piece(start_square, target_square);
 
     if (move::is_pawn_promotion(move))
     {
-        PieceType promoted_piece_type = move::get_pawn_promotion_piece_type(move);
         remove_piece(target_square);
-        place_piece(target_square, piece::create_piece(promoted_piece_type, moving_color));
+        place_piece(target_square,
+                    piece::create_piece(move::get_pawn_promotion_piece_type(move), moving_color));
     }
 
-    hasher::update_square(hash, target_square, pieces[target_square]);
+    hasher::update_square(hash, target_square, squares[target_square]);
 
-    if (position_info::get_castling_right(position_info, moving_color, true))
+    if (start_square == KING_START_SQUARE[moving_color] ||
+        start_square == KINGSIDE_ROOK_START_SQUARE[moving_color])
     {
-        if (start_square == KINGSIDE_ROOK_START_SQUARE[moving_color] ||
-            start_square == KING_START_SQUARE[moving_color])
-        {
-            position_info::set_castling_right(new_position_info, moving_color, true, false);
-        }
+        position_info::set_castling_right(new_position_info, moving_color, true, false);
     }
 
-    if (position_info::get_castling_right(position_info, moving_color, false))
+    if (start_square == KING_START_SQUARE[moving_color] ||
+        start_square == QUEENSIDE_ROOK_START_SQUARE[moving_color])
     {
-        if (start_square == QUEENSIDE_ROOK_START_SQUARE[moving_color] ||
-            start_square == KING_START_SQUARE[moving_color])
-        {
-            position_info::set_castling_right(new_position_info, moving_color, false, false);
-        }
+        position_info::set_castling_right(new_position_info, moving_color, false, false);
     }
 
-    if (position_info::get_castling_right(position_info, next_move_color, true))
+    if (target_square == KINGSIDE_ROOK_START_SQUARE[next_move_color])
     {
-        if (target_square == KINGSIDE_ROOK_START_SQUARE[next_move_color])
-        {
-            position_info::set_castling_right(new_position_info, next_move_color, true, false);
-        }
+        position_info::set_castling_right(new_position_info, next_move_color, true, false);
     }
 
-    if (position_info::get_castling_right(position_info, next_move_color, false))
+    if (target_square == QUEENSIDE_ROOK_START_SQUARE[next_move_color])
     {
-        if (target_square == QUEENSIDE_ROOK_START_SQUARE[next_move_color])
-        {
-            position_info::set_castling_right(new_position_info, next_move_color, false, false);
-        }
+        position_info::set_castling_right(new_position_info, next_move_color, false, false);
     }
 
     hasher::update_to_move(hash);
@@ -262,12 +202,13 @@ void Board::make_move(Move move)
 
 void Board::unmake_move(Move move)
 {
-    Square start_square = move::get_start_square(move);
-    Square target_square = move::get_target_square(move);
-    int move_flag = move::get_flag(move);
+    const Square start_square = move::get_start_square(move);
+    const Square target_square = move::get_target_square(move);
+    const int move_flag = move::get_flag(move);
+    const Piece captured_piece = position_info::get_captured_piece(position_info);
 
     ply--;
-    PositionInfo previous_position_info = previous_positions[ply];
+    const PositionInfo previous_position_info = previous_positions[ply];
     hash = previous_hashes[ply];
 
     if (move::is_pawn_promotion(move))
@@ -279,17 +220,15 @@ void Board::unmake_move(Move move)
 
     move_piece(target_square, start_square);
 
-    bool is_capture = position_info::get_captured_piece(position_info) != piece::NONE;
-    if (is_capture)
+    if (captured_piece != piece::NONE)
     {
         if (move_flag == move::EN_PASSANT_FLAG)
         {
-            Square square = get_en_passant_capture_square(start_square, target_square);
-            place_piece(square, position_info::get_captured_piece(position_info));
+            place_piece(get_en_passant_capture_square(start_square, target_square), captured_piece);
         }
         else
         {
-            place_piece(target_square, position_info::get_captured_piece(position_info));
+            place_piece(target_square, captured_piece);
         }
     }
 
@@ -307,38 +246,10 @@ void Board::unmake_move(Move move)
     position_info = previous_position_info;
 }
 
-void Board::reset()
-{
-    pieces.fill(piece::NONE);
-    piece_type_bbs.fill(0);
-    color_bbs.fill(0);
-    position_info = 0;
-    hash = 0;
-    ply = 0;
-}
-
-Piece Board::get_captured_piece(Move move) const
-{
-    Square target_square = move::get_target_square(move);
-    if (move::get_flag(move) == move::EN_PASSANT_FLAG)
-    {
-        Square capture_square =
-            get_en_passant_capture_square(move::get_start_square(move), target_square);
-        return pieces[capture_square];
-    }
-    return pieces[target_square];
-}
-
-const std::array<Piece, square::TOTAL_SQUARES>& Board::get_pieces() const
-{
-    return pieces;
-}
-
 bool Board::is_repetition(int root_ply) const
 {
-    int oldest_ply = std::max(ply - position_info::get_fifty_move_ply(position_info), 0);
     int game_repetitions = 0;
-    for (int i = ply - 2; i >= oldest_ply; i -= 2)
+    for (int i = ply - 2; i >= std::max(ply - get_fifty_move_ply(), 0); i -= 2)
     {
         if (previous_hashes[i] != hash)
         {
@@ -355,4 +266,36 @@ bool Board::is_repetition(int root_ply) const
         }
     }
     return false;
+}
+
+void Board::place_piece(Square square, Piece piece)
+{
+    squares[square] = piece;
+    bitboard::set_square(pieces_by_type[piece::get_piece_type(piece)], square);
+    bitboard::set_square(pieces_by_color[piece::get_piece_color(piece)], square);
+}
+
+void Board::remove_piece(Square square)
+{
+    const Piece piece = squares[square];
+    bitboard::clear_square(pieces_by_type[piece::get_piece_type(piece)], square);
+    bitboard::clear_square(pieces_by_color[piece::get_piece_color(piece)], square);
+    squares[square] = piece::NONE;
+}
+
+void Board::move_piece(Square start_square, Square target_square)
+{
+    remove_piece(target_square);
+    place_piece(target_square, squares[start_square]);
+    remove_piece(start_square);
+}
+
+void Board::reset()
+{
+    squares.fill(piece::NONE);
+    pieces_by_type.fill(0);
+    pieces_by_color.fill(0);
+    position_info = 0;
+    hash = 0;
+    ply = 0;
 }

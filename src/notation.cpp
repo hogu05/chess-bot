@@ -23,7 +23,7 @@ std::string get_square_notation(Square square)
 Piece get_piece_from_letter(char letter)
 {
     PieceType piece_type = 0;
-    switch (tolower(letter))
+    switch (std::tolower(letter))
     {
     case 'p':
         piece_type = piece::PAWN;
@@ -47,9 +47,7 @@ Piece get_piece_from_letter(char letter)
         piece_type = piece::NONE;
     }
 
-    Color piece_color = (std::isupper(letter) != 0) ? color::WHITE : color::BLACK;
-
-    return piece::create_piece(piece_type, piece_color);
+    return piece::create_piece(piece_type, std::isupper(letter) != 0 ? color::WHITE : color::BLACK);
 }
 
 char get_piece_letter(PieceType piece_type)
@@ -86,7 +84,7 @@ std::string get_move_notation(Move move)
 
 Move get_move_from_notation(std::string_view notation, MoveGenerator& move_generator)
 {
-    for (Move move : move_generator.get_moves())
+    for (const Move move : move_generator.get_moves())
     {
         if (get_move_notation(move) == notation)
         {

@@ -9,7 +9,7 @@
 namespace piece_square_tables
 {
 // clang-format off
-static constexpr std::array<int, square::TOTAL_SQUARES> pawn = 
+constexpr std::array<int, square::TOTAL_SQUARES> pawn =
 {
      0,  0,  0,  0,  0,  0,  0,  0,
     50, 50, 50, 50, 50, 50, 50, 50,
@@ -21,7 +21,7 @@ static constexpr std::array<int, square::TOTAL_SQUARES> pawn =
      0,  0,  0,  0,  0,  0,  0,  0
 };
 
-static constexpr std::array<int, square::TOTAL_SQUARES> knight =
+constexpr std::array<int, square::TOTAL_SQUARES> knight =
 {
     -50,-40,-30,-30,-30,-30,-40,-50,
     -40,-20,  0,  0,  0,  0,-20,-40,
@@ -30,11 +30,10 @@ static constexpr std::array<int, square::TOTAL_SQUARES> knight =
     -30,  0, 15, 20, 20, 15,  0,-30,
     -30,  5, 10, 15, 15, 10,  5,-30,
     -40,-20,  0,  5,  5,  0,-20,-40,
-    -50,-40,-30,-30,-30,-30,-40,-50,
+    -50,-40,-30,-30,-30,-30,-40,-50
 };
 
-
-static constexpr std::array<int, square::TOTAL_SQUARES> bishop =
+constexpr std::array<int, square::TOTAL_SQUARES> bishop =
 {
     -20,-10,-10,-10,-10,-10,-10,-20,
     -10,  0,  0,  0,  0,  0,  0,-10,
@@ -46,7 +45,7 @@ static constexpr std::array<int, square::TOTAL_SQUARES> bishop =
     -20,-10,-10,-10,-10,-10,-10,-20
 };
 
-static constexpr std::array<int, square::TOTAL_SQUARES> rook =
+constexpr std::array<int, square::TOTAL_SQUARES> rook =
 {
       0,  0,  0,  0,  0,  0,  0,  0,
       5, 10, 10, 10, 10, 10, 10,  5,
@@ -58,7 +57,7 @@ static constexpr std::array<int, square::TOTAL_SQUARES> rook =
       0,  0,  0,  5,  5,  0,  0,  0
 };
 
-static constexpr std::array<int, square::TOTAL_SQUARES> queen =
+constexpr std::array<int, square::TOTAL_SQUARES> queen =
 {
     -20,-10,-10, -5, -5,-10,-10,-20,
     -10,  0,  0,  0,  0,  0,  0,-10,
@@ -70,7 +69,8 @@ static constexpr std::array<int, square::TOTAL_SQUARES> queen =
     -20,-10,-10, -5, -5,-10,-10,-20
 };
 
-static constexpr std::array<int, square::TOTAL_SQUARES> king_mid = {
+constexpr std::array<int, square::TOTAL_SQUARES> king_mid =
+{
     -30,-40,-40,-50,-50,-40,-40,-30,
     -30,-40,-40,-50,-50,-40,-40,-30,
     -30,-40,-40,-50,-50,-40,-40,-30,
@@ -81,7 +81,7 @@ static constexpr std::array<int, square::TOTAL_SQUARES> king_mid = {
      20, 30, 10,  0,  0, 10, 30, 20
 };
 
-static constexpr std::array<int, square::TOTAL_SQUARES> king_end = 
+constexpr std::array<int, square::TOTAL_SQUARES> king_end =
 {
     -50,-40,-30,-20,-20,-30,-40,-50,
     -30,-20,-10,  0,  0,-10,-20,-30,
@@ -96,6 +96,6 @@ static constexpr std::array<int, square::TOTAL_SQUARES> king_end =
 // Tables from https://www.chessprogramming.org/Simplified_Evaluation_Function
 
 int get_piece_score(Piece piece, Square square, bool is_endgame);
-}; // namespace piece_square_tables
+} // namespace piece_square_tables
 
 #endif

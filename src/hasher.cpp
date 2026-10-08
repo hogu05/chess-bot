@@ -1,6 +1,7 @@
 #include "hasher.hpp"
 
 #include <array>
+#include <cstdint>
 #include <random>
 
 #include "color.hpp"
@@ -14,39 +15,40 @@ namespace
 {
 struct Keys
 {
-    std::array<std::array<uint64_t, square::TOTAL_SQUARES>, piece::PIECE_TYPE_COUNT * color::COLORS>
+    std::array<std::array<std::uint64_t, square::TOTAL_SQUARES>,
+               piece::PIECE_TYPE_COUNT * color::COLORS>
         piece_keys;
-    uint64_t to_move_key;
-    uint64_t white_short_castle_key;
-    uint64_t white_long_castle_key;
-    uint64_t black_short_castle_key;
-    uint64_t black_long_castle_key;
-    std::array<uint64_t, square::FILES + 1> en_passant_keys;
+    std::uint64_t to_move_key;
+    std::uint64_t white_short_castle_key;
+    std::uint64_t white_long_castle_key;
+    std::uint64_t black_short_castle_key;
+    std::uint64_t black_long_castle_key;
+    std::array<std::uint64_t, square::FILES + 1> en_passant_keys;
 };
 
 Keys generate_keys()
 {
     Keys keys{};
-    std::mt19937_64 gen(std::random_device{}());
-    std::uniform_int_distribution<uint64_t> dis;
+    std::mt19937_64 generator(std::random_device{}());
+    std::uniform_int_distribution<std::uint64_t> distribution;
 
-    for (int piece_index = 0; piece_index < piece::PIECE_TYPE_COUNT * 2; piece_index++)
+    for (auto& square_keys : keys.piece_keys)
     {
-        for (Square square = 0; square < square::TOTAL_SQUARES; square++)
+        for (std::uint64_t& key : square_keys)
         {
-            keys.piece_keys[piece_index][square] = dis(gen);
+            key = distribution(generator);
         }
     }
-    keys.to_move_key = dis(gen);
+    keys.to_move_key = distribution(generator);
 
-    keys.white_short_castle_key = dis(gen);
-    keys.white_long_castle_key = dis(gen);
-    keys.black_short_castle_key = dis(gen);
-    keys.black_long_castle_key = dis(gen);
+    keys.white_short_castle_key = distribution(generator);
+    keys.white_long_castle_key = distribution(generator);
+    keys.black_short_castle_key = distribution(generator);
+    keys.black_long_castle_key = distribution(generator);
 
-    for (int i = 0; i < square::FILES + 1; i++)
+    for (std::uint64_t& key : keys.en_passant_keys)
     {
-        keys.en_passant_keys[i] = dis(gen);
+        key = distribution(generator);
     }
     return keys;
 }
@@ -54,20 +56,21 @@ Keys generate_keys()
 const Keys keys = generate_keys();
 } // namespace
 
-void update_square(uint64_t& hash, Square square, Piece piece)
+void update_square(std::uint64_t& hash, Square square, Piece piece)
 {
-    int piece_index = piece::get_piece_index(piece);
+    const int piece_index = piece::get_piece_index(piece);
     if (piece_index != -1)
     {
         hash ^= keys.piece_keys[piece_index][square];
     }
 }
-void update_to_move(uint64_t& hash)
+
+void update_to_move(std::uint64_t& hash)
 {
     hash ^= keys.to_move_key;
 }
 
-void update_castling_rights(uint64_t& hash, PositionInfo position_info)
+void update_castling_rights(std::uint64_t& hash, PositionInfo position_info)
 {
     if (position_info::get_castling_right(position_info, color::WHITE, true))
     {
@@ -90,9 +93,8 @@ void update_castling_rights(uint64_t& hash, PositionInfo position_info)
     }
 }
 
-void update_en_passant(uint64_t& hash, int file)
+void update_en_passant(std::uint64_t& hash, int file)
 {
-    file = file == -1 ? 8 : file;
-    hash ^= keys.en_passant_keys[file];
+    hash ^= keys.en_passant_keys[file == -1 ? square::FILES : file];
 }
 } // namespace hasher

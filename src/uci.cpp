@@ -57,7 +57,7 @@ void handle_position(Bot& bot, std::istringstream& input)
     }
     while (input >> token)
     {
-        Move move = notation::get_move_from_notation(token, bot.get_move_generator());
+        const Move move = notation::get_move_from_notation(token, bot.get_move_generator());
         if (move == move::NONE_MOVE)
         {
             std::cerr << "Illegal move in position command: " << token << std::endl;
@@ -70,9 +70,9 @@ void handle_position(Bot& bot, std::istringstream& input)
 void handle_go(Bot& bot, std::istringstream& input, std::atomic<bool>& stop,
                std::thread& search_thread)
 {
-    auto now = std::chrono::steady_clock::now();
+    const auto now = std::chrono::steady_clock::now();
     auto deadline = std::chrono::steady_clock::time_point::max();
-    bool is_white = bot.get_board().get_to_move() == color::WHITE;
+    const bool is_white = bot.get_board().get_to_move() == color::WHITE;
 
     long long own_time = -1;
     long long own_increment = 0;
@@ -111,10 +111,11 @@ void handle_go(Bot& bot, std::istringstream& input, std::atomic<bool>& stop,
     search_thread = std::thread(
         [&bot, &stop, deadline]
         {
-            Move move = bot.go(stop, deadline);
-            std::string notation =
-                move == move::NONE_MOVE ? "0000" : notation::get_move_notation(move);
-            std::cout << ("bestmove " + notation + "\n") << std::flush;
+            const Move move = bot.go(stop, deadline);
+            std::cout << ("bestmove " +
+                          (move == move::NONE_MOVE ? "0000" : notation::get_move_notation(move)) +
+                          "\n")
+                      << std::flush;
         });
 }
 } // namespace
@@ -163,7 +164,6 @@ int main()
         }
     }
 
-    // Also reached when the input ends without "quit"
     stop_search(stop, search_thread);
     return 0;
 }

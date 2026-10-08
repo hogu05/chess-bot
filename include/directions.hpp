@@ -21,10 +21,6 @@ constexpr std::array<Direction, 8> sliding_directions = {
     NORTH, EAST, SOUTH, WEST, NORTH_EAST, SOUTH_EAST, SOUTH_WEST, NORTH_WEST};
 constexpr int LAST_ORTHOGONAL_DIRECTION_INDEX = 3;
 
-constexpr std::array<Direction, 8> knight_directions = {
-    NORTH + NORTH + EAST, NORTH + EAST + EAST, SOUTH + EAST + EAST, SOUTH + SOUTH + EAST,
-    SOUTH + SOUTH + WEST, SOUTH + WEST + WEST, NORTH + WEST + WEST, NORTH + NORTH + WEST};
-
 constexpr std::array<std::array<Direction, 2>, color::COLORS> pawn_attack_directions = {
     {{NORTH_EAST, NORTH_WEST}, {SOUTH_EAST, SOUTH_WEST}}};
 
@@ -54,6 +50,6 @@ constexpr int get_direction_index(Direction direction)
         return -1;
     }
 }
-}; // namespace directions
+} // namespace directions
 
 #endif

@@ -24,7 +24,7 @@ constexpr Square get_square(Bitboard bitboard)
 
 constexpr Square pop_square(Bitboard& bitboard)
 {
-    Square square = get_square(bitboard);
+    const Square square = get_square(bitboard);
     clear_square(bitboard, square);
     return square;
 }
@@ -37,11 +37,6 @@ constexpr bool is_set(Bitboard bitboard, Square square)
 constexpr bool is_clear(Bitboard bitboard, Square square)
 {
     return (bitboard & (1ULL << square)) == 0;
-}
-
-constexpr void clear_all(Bitboard& bitboard)
-{
-    bitboard = 0;
 }
 
 constexpr void set_all(Bitboard& bitboard)

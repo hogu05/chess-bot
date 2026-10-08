@@ -38,11 +38,6 @@ constexpr Square create_square(int file, int rank)
 {
     return (rank << 3) | file;
 }
-
-constexpr bool is_valid(Square square)
-{
-    return square >= 0 && square < TOTAL_SQUARES;
-}
 } // namespace square
 
 #endif

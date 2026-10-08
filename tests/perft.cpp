@@ -3,13 +3,14 @@
 #include <cstdint>
 #include <iomanip>
 #include <iostream>
-#include <ostream>
 #include <string>
 #include <vector>
 
 #include "board.hpp"
 #include "move_generator.hpp"
 
+namespace
+{
 struct TestCase
 {
     std::string fen;
@@ -22,45 +23,44 @@ struct TestResult
     int test_id;
     std::uint64_t actual_nodes;
     std::uint64_t expected_nodes;
-    uint64_t time;
+    std::uint64_t time;
     bool passed;
 };
 
-std::vector<TestResult> run_tests(std::vector<TestCase> tests)
+std::vector<TestResult> run_tests(const std::vector<TestCase>& tests)
 {
     std::vector<TestResult> results;
 
     Board board;
     MoveGenerator generator(board);
 
-    for (int i = 0; i < tests.size(); i++)
+    int test_id = 0;
+    for (const TestCase& test : tests)
     {
-        TestCase& test = tests[i];
-
         board.load_position(test.fen);
 
-        auto start = std::chrono::high_resolution_clock::now();
-        std::uint64_t nodes = generator.perft(test.depth);
-        auto stop = std::chrono::high_resolution_clock::now();
+        const auto start = std::chrono::steady_clock::now();
+        const std::uint64_t nodes = generator.perft(test.depth);
+        const auto stop = std::chrono::steady_clock::now();
 
-        std::uint64_t time =
-            std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
-
-        results.emplace_back(i, nodes, test.expected_nodes, time, nodes == test.expected_nodes);
+        results.emplace_back(
+            test_id, nodes, test.expected_nodes,
+            std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count(),
+            nodes == test.expected_nodes);
+        test_id++;
     }
 
     return results;
 }
 
-bool all_passed(std::vector<TestResult> results)
+bool all_passed(const std::vector<TestResult>& results)
 {
     return std::all_of(results.begin(), results.end(),
-                       [](TestResult& result) { return result.passed; });
+                       [](const TestResult& result) { return result.passed; });
 }
 
 void print_results(const std::vector<TestResult>& results)
 {
-
     std::cout << std::left;
     std::cout << std::setw(8) << "Test";
     std::cout << std::setw(12) << "Nodes";
@@ -100,10 +100,11 @@ void print_results(const std::vector<TestResult>& results)
         std::cout << "Some tests failed!" << std::endl;
     }
 }
+} // namespace
 
 int main()
 {
-    std::vector<TestCase> tests = {
+    const std::vector<TestCase> tests = {
         {.fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
          .depth = 6,
          .expected_nodes = 119060324},
@@ -120,7 +121,7 @@ int main()
          .depth = 5,
          .expected_nodes = 89941194}};
 
-    std::vector<TestResult> results = run_tests(tests);
+    const std::vector<TestResult> results = run_tests(tests);
     print_results(results);
 
     return all_passed(results) ? 0 : 1;

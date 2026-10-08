@@ -32,10 +32,10 @@ Move Bot::go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point dead
         std::sort(root_moves.begin(), root_moves.end(),
                   [&](Move a, Move b) { return root_move_scores[a] > root_move_scores[b]; });
 
-        for (Move move : root_moves)
+        for (const Move move : root_moves)
         {
             board.make_move(move);
-            int score = -search(depth - 1, -INF, INF, false, stop);
+            const int score = -search(depth - 1, -INF, INF, false, stop);
             board.unmake_move(move);
 
             if (stop)
@@ -53,6 +53,21 @@ Move Bot::go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point dead
         }
     }
     return best_move;
+}
+
+Board& Bot::get_board()
+{
+    return board;
+}
+
+MoveGenerator& Bot::get_move_generator()
+{
+    return move_generator;
+}
+
+void Bot::load_position(const std::string& fen)
+{
+    board.load_position(fen);
 }
 
 int Bot::search(int depth, int alpha, int beta, bool is_quiescence, std::atomic<bool>& stop)
@@ -100,7 +115,7 @@ int Bot::search(int depth, int alpha, int beta, bool is_quiescence, std::atomic<
     order_moves(moves);
 
     bool found_move = false;
-    for (Move move : moves)
+    for (const Move move : moves)
     {
         if (is_quiescence && !is_noisy(move))
         {
@@ -108,7 +123,7 @@ int Bot::search(int depth, int alpha, int beta, bool is_quiescence, std::atomic<
         }
 
         board.make_move(move);
-        int score = -search(depth - 1, -beta, -alpha, is_quiescence, stop);
+        const int score = -search(depth - 1, -beta, -alpha, is_quiescence, stop);
         board.unmake_move(move);
 
         found_move = true;
@@ -135,14 +150,12 @@ int Bot::search(int depth, int alpha, int beta, bool is_quiescence, std::atomic<
 int Bot::get_move_priority(Move move) const
 {
     int priority = 0;
-    PieceType moved_piece_type =
-        piece::get_piece_type(board.get_pieces()[move::get_start_square(move)]);
-    PieceType captured_piece_type = piece::get_piece_type(board.get_captured_piece(move));
+    const PieceType captured_piece_type = piece::get_piece_type(board.get_captured_piece(move));
 
     if (captured_piece_type != piece::NONE)
     {
         priority += (10 * evaluator::get_piece_value(captured_piece_type)) -
-                    evaluator::get_piece_value(moved_piece_type);
+                    evaluator::get_piece_value(board.get_piece_type(move::get_start_square(move)));
     }
 
     if (move::is_pawn_promotion(move))
@@ -155,26 +168,11 @@ int Bot::get_move_priority(Move move) const
 
 void Bot::order_moves(MoveList& moves) const
 {
-    std::sort(moves.begin(), moves.end(), [this](const Move& move_1, const Move& move_2)
-              { return get_move_priority(move_1) > get_move_priority(move_2); });
+    std::sort(moves.begin(), moves.end(),
+              [this](Move a, Move b) { return get_move_priority(a) > get_move_priority(b); });
 }
 
 bool Bot::is_noisy(Move move) const
 {
-    return (board.get_captured_piece(move) != piece::NONE) || move::is_pawn_promotion(move);
-}
-
-Board& Bot::get_board()
-{
-    return board;
-}
-
-MoveGenerator& Bot::get_move_generator()
-{
-    return move_generator;
-}
-
-void Bot::load_position(const std::string& fen)
-{
-    board.load_position(fen);
+    return board.get_captured_piece(move) != piece::NONE || move::is_pawn_promotion(move);
 }

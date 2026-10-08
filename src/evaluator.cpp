@@ -2,6 +2,7 @@
 
 #include "piece.hpp"
 #include "piece_square_tables.hpp"
+#include "square.hpp"
 #include "types.hpp"
 
 namespace evaluator
@@ -15,33 +16,21 @@ int evaluate(const Board& board)
 {
     int evaluation = 0;
     int total_material = 0;
-    for (Piece piece : board.get_pieces())
+    for (const Piece piece : board.get_squares())
     {
-        int piece_value = evaluator::get_piece_value(piece::get_piece_type(piece));
+        const int piece_value = get_piece_value(piece::get_piece_type(piece));
         total_material += piece_value;
-        if (piece::get_piece_color(piece) == board.get_to_move())
-        {
-            evaluation += piece_value;
-        }
-        else
-        {
-            evaluation -= piece_value;
-        }
+        evaluation +=
+            piece::get_piece_color(piece) == board.get_to_move() ? piece_value : -piece_value;
     }
 
-    bool is_endgame = total_material <= ENDGAME_MATERIAL_LIMIT;
     for (Square square = 0; square < square::TOTAL_SQUARES; square++)
     {
-        Piece piece = board.get_pieces()[square];
-        piece_square_tables::get_piece_score(piece, square, is_endgame);
-        if (piece::get_piece_color(piece) == board.get_to_move())
-        {
-            evaluation += piece_square_tables::get_piece_score(piece, square, is_endgame);
-        }
-        else
-        {
-            evaluation -= piece_square_tables::get_piece_score(piece, square, is_endgame);
-        }
+        const Piece piece = board.get_squares()[square];
+        const int piece_score = piece_square_tables::get_piece_score(
+            piece, square, total_material <= ENDGAME_MATERIAL_LIMIT);
+        evaluation +=
+            piece::get_piece_color(piece) == board.get_to_move() ? piece_score : -piece_score;
     }
 
     return evaluation;

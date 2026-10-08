@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <cstdint>
 #include <string>
 
 #include "board.hpp"
@@ -14,8 +15,11 @@ class Bot
 {
   public:
     Move go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point deadline);
+
     Board& get_board();
+
     MoveGenerator& get_move_generator();
+
     void load_position(const std::string& fen);
 
   private:
@@ -32,9 +36,13 @@ class Bot
     std::chrono::steady_clock::time_point search_deadline;
     int search_root_ply = 0;
     std::uint64_t searched_nodes = 0;
+
     int search(int depth, int alpha, int beta, bool is_quiescence, std::atomic<bool>& stop);
+
     int get_move_priority(Move move) const;
+
     void order_moves(MoveList& moves) const;
+
     bool is_noisy(Move move) const;
 };
 

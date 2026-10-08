@@ -4,7 +4,7 @@
 #include <cstdint>
 
 using Square = int;
-using Bitboard = uint64_t;
+using Bitboard = std::uint64_t;
 using Direction = int;
 using Move = int;
 using Piece = int;
