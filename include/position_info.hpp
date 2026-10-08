@@ -76,7 +76,10 @@ constexpr bool get_castling_right(PositionInfo position_info, Color color, bool 
 
 int get_castling_rights(PositionInfo position_info);
 
-int get_fifty_move_ply(PositionInfo position_info);
+constexpr int get_fifty_move_ply(PositionInfo position_info)
+{
+    return (position_info & FIFTY_MOVES_PLY_MASK) >> FIFTY_MOVES_PLY_SHIFT;
+}
 }; // namespace position_info
 
 #endif

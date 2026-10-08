@@ -12,6 +12,7 @@
 Move Bot::go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point deadline)
 {
     search_deadline = deadline;
+    search_root_ply = board.get_ply();
     searched_nodes = 0;
 
     MoveList legal_moves = move_generator.get_moves();
@@ -68,9 +69,15 @@ int Bot::search(int depth, int alpha, int beta, bool is_quiescence, std::atomic<
         return 0;
     }
 
-    if (board.is_threefold_repetition())
+    if (board.is_repetition(search_root_ply))
     {
-        return THREEFOLD_REPETITION_SCORE;
+        return REPETITION_SCORE;
+    }
+
+    if (board.get_fifty_move_ply() >= FIFTY_MOVE_RULE_PLIES &&
+        !(move_generator.get_moves().empty() && move_generator.is_check()))
+    {
+        return FIFTY_MOVE_RULE_SCORE;
     }
 
     if (depth == 0)

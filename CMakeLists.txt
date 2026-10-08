@@ -19,6 +19,7 @@ add_library(chess_core
     src/evaluator.cpp
     src/piece_square_tables.cpp
     src/hasher.cpp
+    src/magic.cpp
     src/notation.cpp
 )
 

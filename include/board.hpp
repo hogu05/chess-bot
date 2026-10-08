@@ -2,9 +2,7 @@
 #define BOARD_H
 
 #include <array>
-#include <stack>
 #include <string>
-#include <unordered_map>
 
 #include "bitboard.hpp"
 #include "color.hpp"
@@ -59,6 +57,11 @@ class Board
         return position_info::get_to_move(position_info);
     }
 
+    constexpr int get_fifty_move_ply() const
+    {
+        return position_info::get_fifty_move_ply(position_info);
+    }
+
     constexpr bool get_castling_right(Color color, bool short_castle) const
     {
         return position_info::get_castling_right(position_info, color, short_castle);
@@ -75,20 +78,28 @@ class Board
         return square::create_square(en_passant_file, rank);
     }
 
-    bool is_threefold_repetition() const;
+    constexpr int get_ply() const
+    {
+        return ply;
+    }
+
+    bool is_repetition(int root_ply) const;
 
   private:
     static constexpr std::array<Square, color::COLORS> KING_START_SQUARE = {square::e1, square::e8};
-    static constexpr std::array<Square, color::COLORS> QUEENSIDE_ROOK_START_SQUARE = {square::a1, square::a8};
-    static constexpr std::array<Square, color::COLORS> KINGSIDE_ROOK_START_SQUARE = {square::h1, square::h8};
+    static constexpr std::array<Square, color::COLORS> QUEENSIDE_ROOK_START_SQUARE = {square::a1,
+                                                                                      square::a8};
+    static constexpr std::array<Square, color::COLORS> KINGSIDE_ROOK_START_SQUARE = {square::h1,
+                                                                                     square::h8};
 
     std::array<Piece, square::TOTAL_SQUARES> pieces{};
     std::array<Bitboard, piece::PIECE_TYPE_COUNT + 1> piece_type_bbs{};
     std::array<Bitboard, color::COLORS> color_bbs{};
     PositionInfo position_info = 0;
-    std::stack<PositionInfo> previous_positions;
-    std::stack<uint64_t> previous_hashes;
-    std::unordered_map<uint64_t, int> hash_count;
+    static constexpr int MAX_PLIES = 1024;
+    std::array<PositionInfo, MAX_PLIES> previous_positions{};
+    std::array<uint64_t, MAX_PLIES> previous_hashes{};
+    int ply = 0;
     uint64_t hash = 0;
 
     void place_piece(Square square, Piece piece);

@@ -1,7 +1,6 @@
 #include "board.hpp"
 
 #include <algorithm>
-#include <cassert>
 #include <sstream>
 #include <string>
 
@@ -91,7 +90,10 @@ void Board::load_position(const std::string& fen)
         position_info::set_fifty_move_ply(position_info, std::stoi(fen_info[4]));
     }
 
-    hasher::update_to_move(hash, position_info::get_to_move(position_info));
+    if (position_info::get_to_move(position_info) == color::BLACK)
+    {
+        hasher::update_to_move(hash);
+    }
     hasher::update_castling_rights(hash, position_info);
     hasher::update_en_passant(hash, position_info::get_en_passant_file(position_info));
 }
@@ -135,7 +137,6 @@ void Board::move_piece(Square start_square, Square target_square)
 
 void Board::make_move(Move move)
 {
-    assert(ply < MAX_PLIES);
     previous_hashes[ply] = hash;
     previous_positions[ply] = position_info;
     ply++;
@@ -159,9 +160,8 @@ void Board::make_move(Move move)
     }
     else
     {
-        position_info::set_fifty_move_ply(
-            new_position_info, std::min(position_info::get_fifty_move_ply(position_info) + 1,
-                                        position_info::MAX_FIFTY_MOVES_PLY));
+        position_info::set_fifty_move_ply(new_position_info,
+                                          position_info::get_fifty_move_ply(position_info) + 1);
     }
 
     if (move_flag == move::EN_PASSANT_FLAG)
@@ -242,17 +242,19 @@ void Board::make_move(Move move)
         }
     }
 
-    hasher::update_to_move(hash, position_info::get_to_move(new_position_info));
+    hasher::update_to_move(hash);
 
     if (position_info::get_castling_rights(new_position_info) !=
         position_info::get_castling_rights(position_info))
     {
+        hasher::update_castling_rights(hash, position_info);
         hasher::update_castling_rights(hash, new_position_info);
     }
 
     if (position_info::get_en_passant_file(new_position_info) !=
         position_info::get_en_passant_file(position_info))
     {
+        hasher::update_en_passant(hash, position_info::get_en_passant_file(position_info));
         hasher::update_en_passant(hash, position_info::get_en_passant_file(new_position_info));
     }
     position_info = new_position_info;
@@ -332,16 +334,25 @@ const std::array<Piece, square::TOTAL_SQUARES>& Board::get_pieces() const
     return pieces;
 }
 
-bool Board::is_threefold_repetition() const
+bool Board::is_repetition(int root_ply) const
 {
     int oldest_ply = std::max(ply - position_info::get_fifty_move_ply(position_info), 0);
-    int count = 1;
+    int game_repetitions = 0;
     for (int i = ply - 2; i >= oldest_ply; i -= 2)
     {
-        if (previous_hashes[i] == hash)
+        if (previous_hashes[i] != hash)
         {
-            count++;
+            continue;
+        }
+        if (i >= root_ply)
+        {
+            return true;
+        }
+        game_repetitions++;
+        if (game_repetitions == 2)
+        {
+            return true;
         }
     }
-    return count >= 3;
+    return false;
 }

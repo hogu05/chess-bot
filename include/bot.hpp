@@ -21,13 +21,16 @@ class Bot
   private:
     static constexpr int MATE_SCORE = 100000;
     static constexpr int STALEMATE_SCORE = 0;
-    static constexpr int THREEFOLD_REPETITION_SCORE = 0;
+    static constexpr int REPETITION_SCORE = 0;
+    static constexpr int FIFTY_MOVE_RULE_SCORE = 0;
+    static constexpr int FIFTY_MOVE_RULE_PLIES = 100;
     static constexpr int INF = 1000000;
     static constexpr int DEADLINE_CHECK_INTERVAL = 2048;
 
     Board board;
     MoveGenerator move_generator = MoveGenerator(board);
     std::chrono::steady_clock::time_point search_deadline;
+    int search_root_ply = 0;
     std::uint64_t searched_nodes = 0;
     int search(int depth, int alpha, int beta, bool is_quiescence, std::atomic<bool>& stop);
     int get_move_priority(Move move) const;

@@ -62,9 +62,9 @@ void update_square(uint64_t& hash, Square square, Piece piece)
         hash ^= keys.piece_keys[piece_index][square];
     }
 }
-void update_to_move(uint64_t& hash, Color color)
+void update_to_move(uint64_t& hash)
 {
-    hash ^= keys.to_move_key * color;
+    hash ^= keys.to_move_key;
 }
 
 void update_castling_rights(uint64_t& hash, PositionInfo position_info)
