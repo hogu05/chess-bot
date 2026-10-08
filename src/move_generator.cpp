@@ -34,23 +34,39 @@ MoveList MoveGenerator::get_moves()
 {
     init_bitboards();
     MoveList moves;
-    if (!is_double_check)
+    Color color = board.get_to_move();
+
+    add_king_moves(moves, get_friendly_king_square(), color);
+    if (is_double_check)
     {
-        Bitboard moving_pieces_bb = get_friendly_pieces_bb();
-        while (moving_pieces_bb != 0)
-        {
-            Square square = bitboard::pop_square(moving_pieces_bb);
-            bitboard::set_all(pinned_piece_possible_squares_bb);
-            if (bitboard::is_set(pinned_pieces_bb, square))
-            {
-                pinned_piece_possible_squares_bb = get_pinned_piece_possible_squares(square);
-            }
-            add_piece_moves(moves, square);
-        }
+        return moves;
     }
-    else
+
+    Bitboard pawns = board.get_piece_bb(piece::PAWN, color);
+    while (pawns != 0)
     {
-        add_piece_moves(moves, get_friendly_king_square());
+        Square square = bitboard::pop_square(pawns);
+        update_pinned_piece_possible_squares(square);
+        add_pawn_moves(moves, square, color);
+    }
+
+    Bitboard knights = board.get_piece_bb(piece::KNIGHT, color);
+    while (knights != 0)
+    {
+        Square square = bitboard::pop_square(knights);
+        update_pinned_piece_possible_squares(square);
+        add_knight_moves(moves, square);
+    }
+
+    for (PieceType piece_type : {piece::BISHOP, piece::ROOK, piece::QUEEN})
+    {
+        Bitboard sliders = board.get_piece_bb(piece_type, color);
+        while (sliders != 0)
+        {
+            Square square = bitboard::pop_square(sliders);
+            update_pinned_piece_possible_squares(square);
+            add_sliding_piece_moves(moves, square, piece_type);
+        }
     }
     return moves;
 }
@@ -96,28 +112,12 @@ void MoveGenerator::init_bitboards()
     }
 }
 
-void MoveGenerator::add_piece_moves(MoveList& moves, Square square) const
+void MoveGenerator::update_pinned_piece_possible_squares(Square square)
 {
-    PieceType piece_type = board.get_piece_type(square);
-    Color color = board.get_piece_color(square);
-    switch (piece_type)
+    bitboard::set_all(pinned_piece_possible_squares_bb);
+    if (bitboard::is_set(pinned_pieces_bb, square))
     {
-    case piece::PAWN:
-        add_pawn_moves(moves, square, color);
-        break;
-    case piece::KNIGHT:
-        add_knight_moves(moves, square);
-        break;
-    case piece::BISHOP:
-    case piece::ROOK:
-    case piece::QUEEN:
-        add_sliding_piece_moves(moves, square, piece_type);
-        break;
-    case piece::KING:
-        add_king_moves(moves, square, color);
-        break;
-    default:
-        break;
+        pinned_piece_possible_squares_bb = get_pinned_piece_possible_squares(square);
     }
 }
 

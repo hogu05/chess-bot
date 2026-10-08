@@ -30,7 +30,7 @@ class MoveGenerator
 
     bool is_double_check = false;
 
-    void add_piece_moves(MoveList& moves, Square square) const;
+    void update_pinned_piece_possible_squares(Square square);
 
     void add_pawn_moves(MoveList& moves, Square square, Color color) const;
 
