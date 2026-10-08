@@ -54,12 +54,6 @@ constexpr int get_direction_index(Direction direction)
         return -1;
     }
 }
-
-bool is_diagonal_direction(Direction direction);
-
-bool is_orthogonal_direction(Direction direction);
-
-Direction get_ray_direction(Square start_square, Square end_square);
 }; // namespace directions
 
 #endif

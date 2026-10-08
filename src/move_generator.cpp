@@ -298,38 +298,24 @@ Bitboard MoveGenerator::get_king_attacks(Square square)
 
 Bitboard MoveGenerator::get_pinned_pieces() const
 {
-    Bitboard pinned_pieces = 0;
-    Square square = get_friendly_king_square();
-    for (Direction direction : directions::sliding_directions)
-    {
-        Square pinned_piece_square = -1;
+    Square king_square = get_friendly_king_square();
+    Color enemy_color = color::get_other_color(board.get_to_move());
+    Bitboard enemy_queens = board.get_piece_bb(piece::QUEEN, enemy_color);
 
-        for (int i = 1; i <= precomputations::get_squares_to_edge(square, direction); i++)
+    Bitboard snipers =
+        (magic::get_slider_attacks(king_square, piece::ROOK, get_enemy_pieces_bb()) &
+         (board.get_piece_bb(piece::ROOK, enemy_color) | enemy_queens)) |
+        (magic::get_slider_attacks(king_square, piece::BISHOP, get_enemy_pieces_bb()) &
+         (board.get_piece_bb(piece::BISHOP, enemy_color) | enemy_queens));
+
+    Bitboard pinned_pieces = 0;
+    while (snipers != 0)
+    {
+        Bitboard blockers = precomputations::between[king_square][bitboard::pop_square(snipers)] &
+                            board.get_all_pieces_bb();
+        if (std::popcount(blockers) == 1)
         {
-            Square target_square = square + (direction * i);
-            if (bitboard::is_set(get_friendly_pieces_bb(), target_square))
-            {
-                if (pinned_piece_square == -1)
-                {
-                    pinned_piece_square = target_square;
-                }
-                else
-                {
-                    break;
-                }
-            }
-            if (bitboard::is_set(get_enemy_pieces_bb(), target_square))
-            {
-                if (pinned_piece_square != -1)
-                {
-                    if (piece::can_move_in_direction(board.get_piece_type(target_square),
-                                                     -1 * direction))
-                    {
-                        bitboard::set_square(pinned_pieces, pinned_piece_square);
-                    }
-                }
-                break;
-            }
+            pinned_pieces |= blockers;
         }
     }
     return pinned_pieces;
@@ -337,37 +323,13 @@ Bitboard MoveGenerator::get_pinned_pieces() const
 
 Bitboard MoveGenerator::get_blocking_squares() const
 {
-    Bitboard blocking_squares = 0;
-    Square king_square = get_friendly_king_square();
-    Square checking_piece_square = bitboard::get_square(checking_piece_bb);
-    if (!piece::is_sliding_piece(board.get_piece_type(checking_piece_square)))
-    {
-        return blocking_squares;
-    }
-    Direction direction = directions::get_ray_direction(king_square, checking_piece_square);
-    Square target_square = king_square + direction;
-    while (target_square != checking_piece_square)
-    {
-        bitboard::set_square(blocking_squares, target_square);
-        target_square += direction;
-    }
-
-    return blocking_squares;
+    return precomputations::between[get_friendly_king_square()]
+                                   [bitboard::get_square(checking_piece_bb)];
 }
 
 Bitboard MoveGenerator::get_pinned_piece_possible_squares(Square square) const
 {
-    Bitboard pinned_piece_possible_squares = 0;
-    Square king_square = get_friendly_king_square();
-    Direction direction = directions::get_ray_direction(king_square, square);
-    Square target_square = king_square + direction;
-    while (bitboard::is_clear(get_enemy_pieces_bb(), target_square))
-    {
-        bitboard::set_square(pinned_piece_possible_squares, target_square);
-        target_square += direction;
-    }
-    bitboard::set_square(pinned_piece_possible_squares, target_square);
-    return pinned_piece_possible_squares;
+    return precomputations::line[get_friendly_king_square()][square];
 }
 
 Bitboard MoveGenerator::get_legal_squares(Bitboard moves) const
@@ -377,39 +339,25 @@ Bitboard MoveGenerator::get_legal_squares(Bitboard moves) const
 
 bool MoveGenerator::is_en_passant_legal(Square start_square, Square target_square) const
 {
-    Square capture_square = Board::get_en_passant_capture_square(start_square, target_square);
+    Bitboard captured_pawn_bb = bitboard::create_bitboard(
+        Board::get_en_passant_capture_square(start_square, target_square));
     Square king_square = get_friendly_king_square();
-    Direction direction = directions::get_ray_direction(king_square, start_square);
+    Color enemy_color = color::get_other_color(board.get_to_move());
+    Bitboard enemy_queens = board.get_piece_bb(piece::QUEEN, enemy_color);
 
-    if (direction == directions::WEST || direction == directions::EAST)
-    {
-        Bitboard en_passant_pieces_bb = board.get_all_pieces_bb();
-        bitboard::clear_square(en_passant_pieces_bb, start_square);
-        bitboard::clear_square(en_passant_pieces_bb, capture_square);
+    Bitboard pieces_after_capture =
+        (board.get_all_pieces_bb() & ~bitboard::create_bitboard(start_square) & ~captured_pawn_bb) |
+        bitboard::create_bitboard(target_square);
 
-        for (int i = 1; i <= precomputations::get_squares_to_edge(king_square, direction); i++)
-        {
-            Square scan_square = king_square + (direction * i);
-            if (bitboard::is_set(en_passant_pieces_bb, scan_square))
-            {
-                if (bitboard::is_set(get_enemy_pieces_bb(), scan_square))
-                {
-                    Piece piece_type = board.get_piece_type(scan_square);
-                    if (piece_type == piece::QUEEN || piece_type == piece::ROOK)
-                    {
-                        return false;
-                    }
-                }
-                break;
-            }
-        }
-    }
-    if (bitboard::is_set(pinned_piece_possible_squares_bb, target_square))
-    {
-        if (checking_piece_bb == 0 || bitboard::is_set(checking_piece_bb, capture_square))
-        {
-            return true;
-        }
-    }
-    return false;
+    Bitboard slider_attackers =
+        (magic::get_slider_attacks(king_square, piece::ROOK, pieces_after_capture) &
+         (board.get_piece_bb(piece::ROOK, enemy_color) | enemy_queens)) |
+        (magic::get_slider_attacks(king_square, piece::BISHOP, pieces_after_capture) &
+         (board.get_piece_bb(piece::BISHOP, enemy_color) | enemy_queens));
+
+    Bitboard remaining_checkers = checking_piece_bb & ~captured_pawn_bb &
+                                  (board.get_piece_bb(piece::PAWN, enemy_color) |
+                                   board.get_piece_bb(piece::KNIGHT, enemy_color));
+
+    return slider_attackers == 0 && remaining_checkers == 0;
 }

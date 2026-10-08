@@ -112,10 +112,55 @@ constexpr SquareTable compute_king_moves()
     return king_moves;
 }
 
-inline constexpr std::array<SquareTable, color::COLORS> pawn_attacks =
-    compute_pawn_attacks();
+constexpr std::array<SquareTable, square::TOTAL_SQUARES> compute_between()
+{
+    std::array<SquareTable, square::TOTAL_SQUARES> table{};
+    for (Square from = 0; from < square::TOTAL_SQUARES; from++)
+    {
+        for (Direction direction : directions::sliding_directions)
+        {
+            Bitboard squares = 0;
+            for (int i = 1; i <= get_squares_to_edge(from, direction); i++)
+            {
+                Square to = from + (direction * i);
+                table[from][to] = squares;
+                bitboard::set_square(squares, to);
+            }
+        }
+    }
+    return table;
+}
+
+constexpr std::array<SquareTable, square::TOTAL_SQUARES> compute_line()
+{
+    std::array<SquareTable, square::TOTAL_SQUARES> table{};
+    for (Square from = 0; from < square::TOTAL_SQUARES; from++)
+    {
+        for (Direction direction : directions::sliding_directions)
+        {
+            Bitboard full_line = bitboard::create_bitboard(from);
+            for (int i = 1; i <= get_squares_to_edge(from, direction); i++)
+            {
+                bitboard::set_square(full_line, from + (direction * i));
+            }
+            for (int i = 1; i <= get_squares_to_edge(from, -direction); i++)
+            {
+                bitboard::set_square(full_line, from - (direction * i));
+            }
+            for (int i = 1; i <= get_squares_to_edge(from, direction); i++)
+            {
+                table[from][from + (direction * i)] = full_line;
+            }
+        }
+    }
+    return table;
+}
+
+inline constexpr std::array<SquareTable, color::COLORS> pawn_attacks = compute_pawn_attacks();
 inline constexpr SquareTable knight_moves = compute_knight_moves();
 inline constexpr SquareTable king_moves = compute_king_moves();
+inline constexpr std::array<SquareTable, square::TOTAL_SQUARES> between = compute_between();
+inline constexpr std::array<SquareTable, square::TOTAL_SQUARES> line = compute_line();
 } // namespace precomputations
 
 #endif

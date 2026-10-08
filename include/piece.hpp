@@ -27,16 +27,11 @@ PieceType get_piece_type(Piece piece);
 
 Color get_piece_color(Piece piece);
 
-
 Piece create_piece(PieceType piece_type, Color color);
 
 bool can_pawn_move_two_spaces(Square square, Color color);
 
 bool can_pawn_promote(Square square, Color color);
-
-bool can_move_in_direction(Piece piece, Direction direction);
-
-bool is_sliding_piece(Piece piece);
 
 int get_piece_index(Piece piece);
 }; // namespace piece
