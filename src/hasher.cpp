@@ -3,6 +3,7 @@
 #include <array>
 #include <random>
 
+#include "color.hpp"
 #include "piece.hpp"
 #include "position_info.hpp"
 #include "square.hpp"
@@ -13,7 +14,7 @@ namespace
 {
 struct Keys
 {
-    std::array<std::array<uint64_t, square::TOTAL_SQUARES>, piece::PIECE_TYPE_COUNT * piece::COLORS>
+    std::array<std::array<uint64_t, square::TOTAL_SQUARES>, piece::PIECE_TYPE_COUNT * color::COLORS>
         piece_keys;
     uint64_t to_move_key;
     uint64_t white_short_castle_key;
@@ -68,22 +69,22 @@ void update_to_move(uint64_t& hash, Color color)
 
 void update_castling_rights(uint64_t& hash, PositionInfo position_info)
 {
-    if (position_info::get_castling_right(position_info, piece::WHITE, true))
+    if (position_info::get_castling_right(position_info, color::WHITE, true))
     {
         hash ^= keys.white_short_castle_key;
     }
 
-    if (position_info::get_castling_right(position_info, piece::WHITE, false))
+    if (position_info::get_castling_right(position_info, color::WHITE, false))
     {
         hash ^= keys.white_long_castle_key;
     }
 
-    if (position_info::get_castling_right(position_info, piece::BLACK, true))
+    if (position_info::get_castling_right(position_info, color::BLACK, true))
     {
         hash ^= keys.black_short_castle_key;
     }
 
-    if (position_info::get_castling_right(position_info, piece::BLACK, false))
+    if (position_info::get_castling_right(position_info, color::BLACK, false))
     {
         hash ^= keys.black_long_castle_key;
     }

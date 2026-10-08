@@ -3,7 +3,7 @@
 
 #include <array>
 
-#include "piece.hpp"
+#include "color.hpp"
 #include "types.hpp"
 
 namespace directions
@@ -25,7 +25,7 @@ constexpr std::array<Direction, 8> knight_directions = {
     NORTH + NORTH + EAST, NORTH + EAST + EAST, SOUTH + EAST + EAST, SOUTH + SOUTH + EAST,
     SOUTH + SOUTH + WEST, SOUTH + WEST + WEST, NORTH + WEST + WEST, NORTH + NORTH + WEST};
 
-constexpr std::array<std::array<Direction, 2>, piece::COLORS> pawn_attack_directions = {
+constexpr std::array<std::array<Direction, 2>, color::COLORS> pawn_attack_directions = {
     {{NORTH_EAST, NORTH_WEST}, {SOUTH_EAST, SOUTH_WEST}}};
 
 constexpr std::array<Direction, 2> pawn_directions = {NORTH, SOUTH};

@@ -2,6 +2,7 @@
 #define PIECE_H
 
 #include "bit_utils.hpp"
+#include "color.hpp"
 #include "types.hpp"
 
 namespace piece
@@ -22,15 +23,10 @@ constexpr PieceType QUEEN = 0b101;
 constexpr PieceType KING = 0b110;
 constexpr int PIECE_TYPE_COUNT = 6;
 
-constexpr Color WHITE = 0;
-constexpr Color BLACK = 1;
-constexpr int COLORS = 2;
-
 PieceType get_piece_type(Piece piece);
 
 Color get_piece_color(Piece piece);
 
-Color get_other_color(Color color);
 
 Piece create_piece(PieceType piece_type, Color color);
 

@@ -16,10 +16,6 @@ Color get_piece_color(Piece piece)
     return (piece & PIECE_COLOR_MASK) >> PIECE_COLOR_SHIFT;
 }
 
-Color get_other_color(Color color)
-{
-    return color == WHITE ? BLACK : WHITE;
-}
 
 Piece create_piece(PieceType type, Color color)
 {
@@ -29,13 +25,13 @@ Piece create_piece(PieceType type, Color color)
 bool can_pawn_move_two_spaces(Square square, Color color)
 {
     int rank = square::get_rank(square);
-    return (color == WHITE && rank == 1) || (color == BLACK && rank == square::RANKS - 2);
+    return (color == color::WHITE && rank == 1) || (color == color::BLACK && rank == square::RANKS - 2);
 }
 
 bool can_pawn_promote(Square square, Color color)
 {
     int rank = square::get_rank(square);
-    return (color == WHITE && rank == square::RANKS - 2) || (color == BLACK && rank == 1);
+    return (color == color::WHITE && rank == square::RANKS - 2) || (color == color::BLACK && rank == 1);
 }
 
 bool can_move_in_direction(PieceType piece_type, Direction direction)
@@ -68,7 +64,7 @@ int get_piece_index(Piece piece)
     }
 
     int index = piece_type - 1;
-    if (get_piece_color(piece) == BLACK)
+    if (get_piece_color(piece) == color::BLACK)
     {
         index += PIECE_TYPE_COUNT;
     }

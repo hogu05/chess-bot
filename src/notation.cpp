@@ -2,6 +2,7 @@
 
 #include <cctype>
 
+#include "color.hpp"
 #include "move.hpp"
 #include "piece.hpp"
 #include "square.hpp"
@@ -46,7 +47,7 @@ Piece get_piece_from_letter(char letter)
         piece_type = piece::NONE;
     }
 
-    Color piece_color = (std::isupper(letter) != 0) ? piece::WHITE : piece::BLACK;
+    Color piece_color = (std::isupper(letter) != 0) ? color::WHITE : color::BLACK;
 
     return piece::create_piece(piece_type, piece_color);
 }

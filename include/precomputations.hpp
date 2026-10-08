@@ -5,8 +5,8 @@
 #include <array>
 
 #include "bitboard.hpp"
+#include "color.hpp"
 #include "directions.hpp"
-#include "piece.hpp"
 #include "square.hpp"
 #include "types.hpp"
 
@@ -50,12 +50,12 @@ constexpr int get_squares_to_edge(Square square, Direction direction)
 
 using SquareTable = std::array<Bitboard, square::TOTAL_SQUARES>;
 
-constexpr std::array<SquareTable, piece::COLORS> compute_pawn_attacks()
+constexpr std::array<SquareTable, color::COLORS> compute_pawn_attacks()
 {
-    std::array<SquareTable, piece::COLORS> pawn_attacks{};
+    std::array<SquareTable, color::COLORS> pawn_attacks{};
     for (Square square = 0; square < square::TOTAL_SQUARES; square++)
     {
-        for (Color color : {piece::WHITE, piece::BLACK})
+        for (Color color : {color::WHITE, color::BLACK})
         {
             Bitboard attacks = 0;
             for (Direction direction : directions::pawn_attack_directions[color])
@@ -112,7 +112,7 @@ constexpr SquareTable compute_king_moves()
     return king_moves;
 }
 
-inline constexpr std::array<SquareTable, piece::COLORS> pawn_attacks =
+inline constexpr std::array<SquareTable, color::COLORS> pawn_attacks =
     compute_pawn_attacks();
 inline constexpr SquareTable knight_moves = compute_knight_moves();
 inline constexpr SquareTable king_moves = compute_king_moves();

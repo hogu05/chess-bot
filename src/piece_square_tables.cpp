@@ -2,6 +2,7 @@
 
 #include <array>
 
+#include "color.hpp"
 #include "piece.hpp"
 #include "types.hpp"
 namespace piece_square_tables
@@ -48,7 +49,7 @@ int get_piece_score(Piece piece, Square square, bool is_endgame)
 
     Square table_square = square;
 
-    if (piece_color == piece::WHITE)
+    if (piece_color == color::WHITE)
     {
         int rank = (square::RANKS - 1) - square::get_rank(square);
         table_square = square::create_square(square::get_file(square), rank);

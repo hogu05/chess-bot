@@ -7,10 +7,9 @@
 #include <thread>
 
 #include "bot.hpp"
+#include "color.hpp"
 #include "move.hpp"
 #include "notation.hpp"
-#include "piece.hpp"
-#include "position_info.hpp"
 
 namespace
 {
@@ -73,7 +72,7 @@ void handle_go(Bot& bot, std::istringstream& input, std::atomic<bool>& stop,
 {
     auto now = std::chrono::steady_clock::now();
     auto deadline = std::chrono::steady_clock::time_point::max();
-    bool is_white = position_info::get_to_move(bot.get_board().get_position_info()) == piece::WHITE;
+    bool is_white = bot.get_board().get_to_move() == color::WHITE;
 
     long long own_time = -1;
     long long own_increment = 0;

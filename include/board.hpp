@@ -6,19 +6,19 @@
 #include <string>
 #include <unordered_map>
 
+#include "bitboard.hpp"
+#include "color.hpp"
 #include "piece.hpp"
+#include "position_info.hpp"
 #include "square.hpp"
 #include "types.hpp"
 
 class Board
 {
   public:
-    static Square get_en_passant_square(int en_passant_file, Color to_move);
-
     static Square get_en_passant_capture_square(Square start_square, Square target_square);
 
     const std::array<Piece, square::TOTAL_SQUARES>& get_pieces() const;
-    PositionInfo get_position_info() const;
 
     void load_position(const std::string& fen);
 
@@ -44,16 +44,47 @@ class Board
         return piece_type_bbs[piece_type] & color_bbs[color];
     }
 
+    constexpr Bitboard get_all_pieces_bb() const
+    {
+        return color_bbs[color::WHITE] | color_bbs[color::BLACK];
+    }
+
+    constexpr Square get_king_square(Color color) const
+    {
+        return bitboard::get_square(get_piece_bb(piece::KING, color));
+    }
+
+    constexpr Color get_to_move() const
+    {
+        return position_info::get_to_move(position_info);
+    }
+
+    constexpr bool get_castling_right(Color color, bool short_castle) const
+    {
+        return position_info::get_castling_right(position_info, color, short_castle);
+    }
+
+    constexpr Square get_en_passant_square() const
+    {
+        int en_passant_file = position_info::get_en_passant_file(position_info);
+        if (en_passant_file == -1)
+        {
+            return -1;
+        }
+        int rank = get_to_move() == color::WHITE ? 5 : 2;
+        return square::create_square(en_passant_file, rank);
+    }
+
     bool is_threefold_repetition() const;
 
   private:
-    static constexpr std::array<Square, piece::COLORS> KING_START_SQUARE = {square::e1, square::e8};
-    static constexpr std::array<Square, piece::COLORS> QUEENSIDE_ROOK_START_SQUARE = {square::a1, square::a8};
-    static constexpr std::array<Square, piece::COLORS> KINGSIDE_ROOK_START_SQUARE = {square::h1, square::h8};
+    static constexpr std::array<Square, color::COLORS> KING_START_SQUARE = {square::e1, square::e8};
+    static constexpr std::array<Square, color::COLORS> QUEENSIDE_ROOK_START_SQUARE = {square::a1, square::a8};
+    static constexpr std::array<Square, color::COLORS> KINGSIDE_ROOK_START_SQUARE = {square::h1, square::h8};
 
     std::array<Piece, square::TOTAL_SQUARES> pieces{};
     std::array<Bitboard, piece::PIECE_TYPE_COUNT + 1> piece_type_bbs{};
-    std::array<Bitboard, piece::COLORS> color_bbs{};
+    std::array<Bitboard, color::COLORS> color_bbs{};
     PositionInfo position_info = 0;
     std::stack<PositionInfo> previous_positions;
     std::stack<uint64_t> previous_hashes;

@@ -22,11 +22,6 @@ class MoveGenerator
   private:
     Board& board;
 
-    Bitboard friendly_pieces_bb = 0;
-    Bitboard enemy_pieces_bb = 0;
-    Bitboard all_pieces_bb = 0;
-    Bitboard friendly_king_bb = 0;
-    Square en_passant_square = -1;
     Bitboard attacked_squares_bb = 0;
     Bitboard checking_piece_bb = 0;
     Bitboard blocking_squares_bb = 0;
@@ -48,11 +43,15 @@ class MoveGenerator
 
     void add_king_moves(MoveList& moves, Square square, Color color) const;
 
+    Bitboard get_friendly_pieces_bb() const;
+
+    Bitboard get_enemy_pieces_bb() const;
+
+    Square get_friendly_king_square() const;
+
     void init_bitboards();
 
     void update_attacks();
-
-    Bitboard get_piece_attacks(Square square) const;
 
     static Bitboard get_pawn_attacks(Square square, Color color);
 

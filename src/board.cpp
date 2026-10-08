@@ -4,21 +4,12 @@
 #include <string>
 
 #include "bitboard.hpp"
+#include "color.hpp"
 #include "hasher.hpp"
 #include "move.hpp"
 #include "notation.hpp"
 #include "piece.hpp"
 #include "position_info.hpp"
-
-Square Board::get_en_passant_square(int en_passant_file, Color to_move)
-{
-    if (en_passant_file == -1)
-    {
-        return -1;
-    }
-    int rank = to_move == piece::WHITE ? 5 : 2;
-    return square::create_square(en_passant_file, rank);
-}
 
 Square Board::get_en_passant_capture_square(Square start_square, Square target_square)
 {
@@ -59,12 +50,12 @@ void Board::load_position(const std::string& fen)
 
     if (fen_info[1] == "w")
     {
-        position_info::set_to_move(position_info, piece::WHITE);
+        position_info::set_to_move(position_info, color::WHITE);
     }
 
     if (fen_info[1] == "b")
     {
-        position_info::set_to_move(position_info, piece::BLACK);
+        position_info::set_to_move(position_info, color::BLACK);
     }
 
     for (char current_char : fen_info[2])
@@ -72,16 +63,16 @@ void Board::load_position(const std::string& fen)
         switch (current_char)
         {
         case 'K':
-            position_info::set_castling_right(position_info, piece::WHITE, true, true);
+            position_info::set_castling_right(position_info, color::WHITE, true, true);
             break;
         case 'Q':
-            position_info::set_castling_right(position_info, piece::WHITE, false, true);
+            position_info::set_castling_right(position_info, color::WHITE, false, true);
             break;
         case 'k':
-            position_info::set_castling_right(position_info, piece::BLACK, true, true);
+            position_info::set_castling_right(position_info, color::BLACK, true, true);
             break;
         case 'q':
-            position_info::set_castling_right(position_info, piece::BLACK, false, true);
+            position_info::set_castling_right(position_info, color::BLACK, false, true);
             break;
         default:
             break;
@@ -154,7 +145,7 @@ void Board::make_move(Move move)
     Square target_square = move::get_target_square(move);
     int move_flag = move::get_flag(move);
     Color moving_color = position_info::get_to_move(position_info);
-    Color next_move_color = piece::get_other_color(moving_color);
+    Color next_move_color = color::get_other_color(moving_color);
 
     position_info::set_to_move(new_position_info, next_move_color);
 
@@ -334,11 +325,6 @@ Piece Board::get_captured_piece(Move move) const
 const std::array<Piece, square::TOTAL_SQUARES>& Board::get_pieces() const
 {
     return pieces;
-}
-
-PositionInfo Board::get_position_info() const
-{
-    return position_info;
 }
 
 bool Board::is_threefold_repetition() const

@@ -2,6 +2,7 @@
 #define POSITION_INFO_H
 
 #include "bit_utils.hpp"
+#include "color.hpp"
 #include "types.hpp"
 
 namespace position_info
@@ -30,6 +31,15 @@ constexpr int CASTLING_RIGHTS_SHIFT = SHORT_CASTLE_WHITE_SHIFT;
 constexpr int CASTLING_RIGHTS_MASK = SHORT_CASTLE_WHITE_MASK | SHORT_CASTLE_BLACK_MASK |
                                      LONG_CASTLE_WHITE_MASK | LONG_CASTLE_BLACK_MASK;
 
+constexpr int get_castling_mask(Color color, bool short_castle)
+{
+    if (short_castle)
+    {
+        return color == color::WHITE ? SHORT_CASTLE_WHITE_MASK : SHORT_CASTLE_BLACK_MASK;
+    }
+    return color == color::WHITE ? LONG_CASTLE_WHITE_MASK : LONG_CASTLE_BLACK_MASK;
+}
+
 void set_to_move(PositionInfo& position_info, Color to_move);
 
 void set_captured_piece(PositionInfo& position_info, Piece captured_piece);
@@ -43,13 +53,26 @@ void set_castling_rights(PositionInfo& position_info, int castling_rights);
 
 void set_fifty_move_ply(PositionInfo& position_info, int fifty_move_ply);
 
-Color get_to_move(PositionInfo position_info);
+constexpr Color get_to_move(PositionInfo position_info)
+{
+    return position_info & TO_MOVE_MASK;
+}
 
 Piece get_captured_piece(PositionInfo position_info);
 
-int get_en_passant_file(PositionInfo position_info);
+constexpr int get_en_passant_file(PositionInfo position_info)
+{
+    if ((position_info & EN_PASSANT_FLAG_MASK) == 0)
+    {
+        return -1;
+    }
+    return (position_info & EN_PASSANT_FILE_MASK) >> EN_PASSANT_FILE_SHIFT;
+}
 
-bool get_castling_right(PositionInfo position_info, Color color, bool short_castle);
+constexpr bool get_castling_right(PositionInfo position_info, Color color, bool short_castle)
+{
+    return (position_info & get_castling_mask(color, short_castle)) != 0;
+}
 
 int get_castling_rights(PositionInfo position_info);
 
