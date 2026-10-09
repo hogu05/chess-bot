@@ -51,6 +51,8 @@ class Bot
     static constexpr int REVERSE_FUTILITY_MARGIN = 100;
     static constexpr int FUTILITY_MAX_DEPTH = 2;
     static constexpr int FUTILITY_MARGIN = 150;
+    static constexpr int ASPIRATION_MIN_DEPTH = 4;
+    static constexpr int ASPIRATION_WINDOW = 50;
 
     Board board;
     MoveGenerator move_generator = MoveGenerator(board);

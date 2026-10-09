@@ -17,11 +17,21 @@ MoveGenerator::MoveGenerator(Board& board) : board(board)
 
 MoveList MoveGenerator::get_moves()
 {
+    return generate_moves(false);
+}
+
+MoveList MoveGenerator::get_noisy_moves()
+{
+    return generate_moves(true);
+}
+
+MoveList MoveGenerator::generate_moves(bool only_noisy)
+{
     update_checks_and_pins();
     MoveList moves;
     const Color color = board.get_to_move();
 
-    add_king_moves(moves, get_friendly_king_square(), color);
+    add_king_moves(moves, get_friendly_king_square(), color, only_noisy);
     if (is_double_check)
     {
         return moves;
@@ -32,7 +42,7 @@ MoveList MoveGenerator::get_moves()
     {
         const Square square = bitboard::pop_square(pawns);
         update_pinned_piece_possible_squares(square);
-        add_pawn_moves(moves, square, color);
+        add_pawn_moves(moves, square, color, only_noisy);
     }
 
     Bitboard knights = board.get_pieces(piece::KNIGHT, color);
@@ -40,7 +50,7 @@ MoveList MoveGenerator::get_moves()
     {
         const Square square = bitboard::pop_square(knights);
         update_pinned_piece_possible_squares(square);
-        add_knight_moves(moves, square);
+        add_knight_moves(moves, square, only_noisy);
     }
 
     for (const PieceType piece_type : {piece::BISHOP, piece::ROOK, piece::QUEEN})
@@ -50,7 +60,7 @@ MoveList MoveGenerator::get_moves()
         {
             const Square square = bitboard::pop_square(sliders);
             update_pinned_piece_possible_squares(square);
-            add_sliding_piece_moves(moves, square, piece_type);
+            add_sliding_piece_moves(moves, square, piece_type, only_noisy);
         }
     }
     return moves;
@@ -209,13 +219,19 @@ Bitboard MoveGenerator::get_legal_squares(Bitboard squares) const
     return squares & (blocking_squares | checkers) & pinned_piece_possible_squares;
 }
 
-void MoveGenerator::add_king_moves(MoveList& moves, Square square, Color color) const
+Bitboard MoveGenerator::get_target_squares(bool only_noisy) const
+{
+    return only_noisy ? get_enemy_pieces() : ~get_friendly_pieces();
+}
+
+void MoveGenerator::add_king_moves(MoveList& moves, Square square, Color color,
+                                   bool only_noisy) const
 {
     move::add_moves_from_bitboard(moves, square,
-                                  precomputations::king_moves[square] & ~get_friendly_pieces() &
-                                      ~attacked_squares);
+                                  precomputations::king_moves[square] &
+                                      get_target_squares(only_noisy) & ~attacked_squares);
 
-    if (checkers != 0)
+    if (checkers != 0 || only_noisy)
     {
         return;
     }
@@ -238,7 +254,8 @@ void MoveGenerator::add_king_moves(MoveList& moves, Square square, Color color) 
     }
 }
 
-void MoveGenerator::add_pawn_moves(MoveList& moves, Square square, Color color) const
+void MoveGenerator::add_pawn_moves(MoveList& moves, Square square, Color color,
+                                   bool only_noisy) const
 {
     const Bitboard all_pieces = board.get_all_pieces();
     const Square en_passant_square = board.get_en_passant_square();
@@ -247,7 +264,7 @@ void MoveGenerator::add_pawn_moves(MoveList& moves, Square square, Color color) 
     const Square double_push_square = push_square + direction;
     const bool is_promotion = piece::can_pawn_promote(square, color);
 
-    if (bitboard::is_clear(all_pieces, push_square))
+    if (bitboard::is_clear(all_pieces, push_square) && (!only_noisy || is_promotion))
     {
         if (get_legal_squares(bitboard::create_bitboard(push_square)) != 0)
         {
@@ -291,20 +308,20 @@ void MoveGenerator::add_pawn_move(MoveList& moves, Square start_square, Square t
     moves.push_back(move::create_move(start_square, target_square, move::PROMOTE_TO_KNIGHT_FLAG));
 }
 
-void MoveGenerator::add_knight_moves(MoveList& moves, Square square) const
+void MoveGenerator::add_knight_moves(MoveList& moves, Square square, bool only_noisy) const
 {
     move::add_moves_from_bitboard(
         moves, square,
-        get_legal_squares(precomputations::knight_moves[square] & ~get_friendly_pieces()));
+        get_legal_squares(precomputations::knight_moves[square] & get_target_squares(only_noisy)));
 }
 
-void MoveGenerator::add_sliding_piece_moves(MoveList& moves, Square square,
-                                            PieceType piece_type) const
+void MoveGenerator::add_sliding_piece_moves(MoveList& moves, Square square, PieceType piece_type,
+                                            bool only_noisy) const
 {
     move::add_moves_from_bitboard(
         moves, square,
         get_legal_squares(magic::get_slider_attacks(square, piece_type, board.get_all_pieces()) &
-                          ~get_friendly_pieces()));
+                          get_target_squares(only_noisy)));
 }
 
 bool MoveGenerator::is_en_passant_legal(Square start_square, Square target_square) const

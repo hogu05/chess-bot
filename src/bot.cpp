@@ -54,34 +54,62 @@ Move Bot::go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point dead
 
     Move best_move = *legal_moves.begin();
     std::unordered_map<Move, int> root_move_scores;
+    int previous_score = 0;
 
     for (int depth = 1; !stop && depth <= std::min(max_depth, MAX_DEPTH); depth++)
     {
-        int best_score = -INF;
-        MoveList root_moves = move_generator.get_moves();
+        int window = ASPIRATION_WINDOW;
+        int alpha = depth >= ASPIRATION_MIN_DEPTH ? previous_score - window : -INF;
+        int beta = depth >= ASPIRATION_MIN_DEPTH ? previous_score + window : INF;
 
-        std::sort(root_moves.begin(), root_moves.end(),
-                  [&](Move a, Move b) { return root_move_scores[a] > root_move_scores[b]; });
-
-        for (const Move move : root_moves)
+        while (!stop)
         {
-            const int score =
-                search_move(move, move == root_moves[0], depth, 0, best_score, INF, stop);
+            int best_score = -INF;
+            MoveList root_moves = move_generator.get_moves();
 
-            if (stop)
+            std::sort(root_moves.begin(), root_moves.end(),
+                      [&](Move a, Move b) { return root_move_scores[a] > root_move_scores[b]; });
+
+            for (const Move move : root_moves)
             {
+                const int score = search_move(move, move == root_moves[0], depth, 0,
+                                              std::max(alpha, best_score), beta, stop);
+
+                if (stop)
+                {
+                    break;
+                }
+
+                root_move_scores[move] = score;
+
+                if (score > best_score)
+                {
+                    best_score = score;
+                    best_move = move;
+                }
+
+                if (score >= beta)
+                {
+                    break;
+                }
+            }
+            root_move_scores[best_move] = INF;
+
+            if (best_score <= alpha)
+            {
+                alpha = std::max(alpha - window, -INF);
+            }
+            else if (best_score >= beta)
+            {
+                beta = std::min(beta + window, INF);
+            }
+            else
+            {
+                previous_score = best_score;
                 break;
             }
-
-            root_move_scores[move] = score;
-
-            if (score > best_score)
-            {
-                best_score = score;
-                best_move = move;
-            }
+            window *= 2;
         }
-        root_move_scores[best_move] = INF;
     }
     return best_move;
 }
@@ -271,14 +299,7 @@ int Bot::quiescence_search(int alpha, int beta, std::atomic<bool>& stop)
     }
     alpha = std::max(alpha, static_score);
 
-    MoveList noisy_moves;
-    for (const Move move : move_generator.get_moves())
-    {
-        if (is_noisy(move))
-        {
-            noisy_moves.push_back(move);
-        }
-    }
+    MoveList noisy_moves = move_generator.get_noisy_moves();
     order_moves(noisy_moves, move::NONE_MOVE, {});
 
     for (const Move move : noisy_moves)

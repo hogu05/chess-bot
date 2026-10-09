@@ -17,6 +17,8 @@ class MoveGenerator
 
     MoveList get_moves();
 
+    MoveList get_noisy_moves();
+
     bool is_check() const;
 
     std::uint64_t perft(int depth);
@@ -30,6 +32,8 @@ class MoveGenerator
     Bitboard pinned_pieces = 0;
     Bitboard pinned_piece_possible_squares = 0;
     bool is_double_check = false;
+
+    MoveList generate_moves(bool only_noisy);
 
     Bitboard get_friendly_pieces() const;
 
@@ -47,16 +51,19 @@ class MoveGenerator
 
     Bitboard get_legal_squares(Bitboard squares) const;
 
-    void add_king_moves(MoveList& moves, Square square, Color color) const;
+    Bitboard get_target_squares(bool only_noisy) const;
 
-    void add_pawn_moves(MoveList& moves, Square square, Color color) const;
+    void add_king_moves(MoveList& moves, Square square, Color color, bool only_noisy) const;
+
+    void add_pawn_moves(MoveList& moves, Square square, Color color, bool only_noisy) const;
 
     static void add_pawn_move(MoveList& moves, Square start_square, Square target_square, int flag,
                               bool is_promotion);
 
-    void add_knight_moves(MoveList& moves, Square square) const;
+    void add_knight_moves(MoveList& moves, Square square, bool only_noisy) const;
 
-    void add_sliding_piece_moves(MoveList& moves, Square square, PieceType piece_type) const;
+    void add_sliding_piece_moves(MoveList& moves, Square square, PieceType piece_type,
+                                 bool only_noisy) const;
 
     bool is_en_passant_legal(Square start_square, Square target_square) const;
 };
