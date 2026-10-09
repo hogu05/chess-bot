@@ -57,6 +57,9 @@ class Bot
 
     int search(int depth, int alpha, int beta, std::atomic<bool>& stop);
 
+    int search_move(Move move, bool is_first_move, int depth, int alpha, int beta,
+                    std::atomic<bool>& stop);
+
     int quiescence_search(int alpha, int beta, std::atomic<bool>& stop);
 
     void check_deadline(std::atomic<bool>& stop) const;

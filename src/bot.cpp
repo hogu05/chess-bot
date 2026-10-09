@@ -38,9 +38,8 @@ Move Bot::go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point dead
 
         for (const Move move : root_moves)
         {
-            board.make_move(move);
-            const int score = -search(depth - 1, -INF, -best_score, stop);
-            board.unmake_move(move);
+            const int score =
+                search_move(move, move == root_moves[0], depth, best_score, INF, stop);
 
             if (stop)
             {
@@ -121,9 +120,7 @@ int Bot::search(int depth, int alpha, int beta, std::atomic<bool>& stop)
     Move best_move = move::NONE_MOVE;
     for (const Move move : moves)
     {
-        board.make_move(move);
-        const int score = -search(depth - 1, -beta, -alpha, stop);
-        board.unmake_move(move);
+        const int score = search_move(move, move == moves[0], depth, alpha, beta, stop);
 
         if (stop)
         {
@@ -158,6 +155,27 @@ int Bot::search(int depth, int alpha, int beta, std::atomic<bool>& stop)
                                                            : TranspositionTable::Bound::UPPER,
                               best_move);
     return alpha;
+}
+
+int Bot::search_move(Move move, bool is_first_move, int depth, int alpha, int beta,
+                     std::atomic<bool>& stop)
+{
+    board.make_move(move);
+    int score = 0;
+    if (is_first_move)
+    {
+        score = -search(depth - 1, -beta, -alpha, stop);
+    }
+    else
+    {
+        score = -search(depth - 1, -alpha - 1, -alpha, stop);
+        if (score > alpha && score < beta)
+        {
+            score = -search(depth - 1, -beta, -alpha, stop);
+        }
+    }
+    board.unmake_move(move);
+    return score;
 }
 
 int Bot::quiescence_search(int alpha, int beta, std::atomic<bool>& stop)
