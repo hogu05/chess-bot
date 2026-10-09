@@ -9,7 +9,7 @@
 #include "move.hpp"
 #include "piece.hpp"
 
-Move Bot::go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point deadline)
+Move Bot::go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point deadline, int max_depth)
 {
     search_deadline = deadline;
     search_root_ply = board.get_ply();
@@ -24,7 +24,7 @@ Move Bot::go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point dead
     Move best_move = *legal_moves.begin();
     std::unordered_map<Move, int> root_move_scores;
 
-    for (int depth = 1; !stop; depth++)
+    for (int depth = 1; !stop && depth <= max_depth; depth++)
     {
         int best_score = -INF;
         MoveList root_moves = move_generator.get_moves();
@@ -69,6 +69,11 @@ MoveGenerator& Bot::get_move_generator()
 void Bot::load_position(const std::string& fen)
 {
     board.load_position(fen);
+}
+
+std::uint64_t Bot::get_searched_nodes() const
+{
+    return searched_nodes;
 }
 
 int Bot::search(int depth, int alpha, int beta, bool is_quiescence, std::atomic<bool>& stop)

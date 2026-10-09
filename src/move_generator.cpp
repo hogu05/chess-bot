@@ -61,7 +61,7 @@ bool MoveGenerator::is_check() const
     return checkers != 0;
 }
 
-int MoveGenerator::perft(int depth)
+std::uint64_t MoveGenerator::perft(int depth)
 {
     MoveList moves = get_moves();
     if (depth == 1)
@@ -69,7 +69,7 @@ int MoveGenerator::perft(int depth)
         return moves.size();
     }
 
-    int nodes = 0;
+    std::uint64_t nodes = 0;
     for (const Move move : moves)
     {
         board.make_move(move);

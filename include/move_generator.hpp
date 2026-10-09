@@ -1,6 +1,8 @@
 #ifndef MOVE_GENERATOR_H
 #define MOVE_GENERATOR_H
 
+#include <cstdint>
+
 #include "move_list.hpp"
 #include "types.hpp"
 
@@ -17,7 +19,7 @@ class MoveGenerator
 
     bool is_check() const;
 
-    int perft(int depth);
+    std::uint64_t perft(int depth);
 
   private:
     Board& board;

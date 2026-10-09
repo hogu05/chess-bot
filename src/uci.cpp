@@ -76,11 +76,16 @@ void handle_go(Bot& bot, std::istringstream& input, std::atomic<bool>& stop,
 
     long long own_time = -1;
     long long own_increment = 0;
+    int max_depth = Bot::MAX_DEPTH;
     std::string token;
     while (input >> token)
     {
         long long value = 0;
-        if (token == "movetime" && input >> value)
+        if (token == "depth")
+        {
+            input >> max_depth;
+        }
+        else if (token == "movetime" && input >> value)
         {
             deadline = now + std::chrono::milliseconds(value);
         }
@@ -109,9 +114,9 @@ void handle_go(Bot& bot, std::istringstream& input, std::atomic<bool>& stop,
 
     stop = false;
     search_thread = std::thread(
-        [&bot, &stop, deadline]
+        [&bot, &stop, deadline, max_depth]
         {
-            const Move move = bot.go(stop, deadline);
+            const Move move = bot.go(stop, deadline, max_depth);
             std::cout << ("bestmove " +
                           (move == move::NONE_MOVE ? "0000" : notation::get_move_notation(move)) +
                           "\n")

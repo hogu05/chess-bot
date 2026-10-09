@@ -26,6 +26,11 @@ add_executable(perft
 )
 target_link_libraries(perft PRIVATE chess_core)
 
+add_executable(bench
+    tests/bench.cpp
+)
+target_link_libraries(bench PRIVATE chess_core)
+
 add_executable(chess-bot-uci
     src/uci.cpp
 )

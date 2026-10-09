@@ -14,13 +14,17 @@
 class Bot
 {
   public:
-    Move go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point deadline);
+    static constexpr int MAX_DEPTH = 256;
+
+    Move go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point deadline, int max_depth);
 
     Board& get_board();
 
     MoveGenerator& get_move_generator();
 
     void load_position(const std::string& fen);
+
+    std::uint64_t get_searched_nodes() const;
 
   private:
     static constexpr int MATE_SCORE = 100000;
