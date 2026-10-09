@@ -18,15 +18,15 @@ int get_piece_score(Piece piece, Square square, bool is_endgame)
     switch (piece::get_piece_type(piece))
     {
     case piece::PAWN:
-        return pawn[table_square];
+        return is_endgame ? pawn_end[table_square] : pawn_mid[table_square];
     case piece::KNIGHT:
-        return knight[table_square];
+        return is_endgame ? knight_end[table_square] : knight_mid[table_square];
     case piece::BISHOP:
-        return bishop[table_square];
+        return is_endgame ? bishop_end[table_square] : bishop_mid[table_square];
     case piece::ROOK:
-        return rook[table_square];
+        return is_endgame ? rook_end[table_square] : rook_mid[table_square];
     case piece::QUEEN:
-        return queen[table_square];
+        return is_endgame ? queen_end[table_square] : queen_mid[table_square];
     case piece::KING:
         return is_endgame ? king_end[table_square] : king_mid[table_square];
     default:
