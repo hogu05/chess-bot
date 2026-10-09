@@ -8,6 +8,8 @@
 class MoveList
 {
   public:
+    static constexpr int MAX_MOVES = 256;
+
     constexpr void push_back(Move move)
     {
         moves[count++] = move;
@@ -33,8 +35,13 @@ class MoveList
         return moves.data() + count;
     }
 
+    constexpr Move& operator[](int index)
+    {
+        return moves[index];
+    }
+
   private:
-    std::array<Move, 256> moves;
+    std::array<Move, MAX_MOVES> moves{};
     int count = 0;
 };
 

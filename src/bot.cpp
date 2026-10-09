@@ -8,6 +8,7 @@
 
 #include "evaluator.hpp"
 #include "move.hpp"
+#include "move_list.hpp"
 #include "piece.hpp"
 
 Move Bot::go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point deadline, int max_depth)
@@ -16,6 +17,7 @@ Move Bot::go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point dead
     search_root_ply = board.get_ply();
     searched_nodes = 0;
     killer_moves = {};
+    history_scores = {};
 
     MoveList legal_moves = move_generator.get_moves();
     if (legal_moves.empty())
@@ -133,6 +135,7 @@ int Bot::search(int depth, int alpha, int beta, std::atomic<bool>& stop)
             if (!is_noisy(move))
             {
                 update_killer_moves(move, ply);
+                update_history_score(move, depth);
             }
             transposition_table.store(board.get_hash(), depth, get_table_score(beta, ply),
                                       TranspositionTable::Bound::LOWER, move);
@@ -178,17 +181,18 @@ int Bot::quiescence_search(int alpha, int beta, std::atomic<bool>& stop)
     }
     alpha = std::max(alpha, static_score);
 
-    MoveList moves = move_generator.get_moves();
-    order_moves(moves, move::NONE_MOVE, {});
-
-    bool found_move = false;
-    for (const Move move : moves)
+    MoveList noisy_moves;
+    for (const Move move : move_generator.get_moves())
     {
-        if (!is_noisy(move))
+        if (is_noisy(move))
         {
-            continue;
+            noisy_moves.push_back(move);
         }
+    }
+    order_moves(noisy_moves, move::NONE_MOVE, {});
 
+    for (const Move move : noisy_moves)
+    {
         board.make_move(move);
         const int score = -quiescence_search(-beta, -alpha, stop);
         board.unmake_move(move);
@@ -198,7 +202,6 @@ int Bot::quiescence_search(int alpha, int beta, std::atomic<bool>& stop)
             return 0;
         }
 
-        found_move = true;
         if (score >= beta)
         {
             return beta;
@@ -206,7 +209,7 @@ int Bot::quiescence_search(int alpha, int beta, std::atomic<bool>& stop)
         alpha = std::max(alpha, score);
     }
 
-    if (!found_move)
+    if (noisy_moves.empty())
     {
         return static_score;
     }
@@ -265,6 +268,14 @@ void Bot::update_killer_moves(Move move, int ply)
     }
 }
 
+void Bot::update_history_score(Move move, int depth)
+{
+    const int bonus = std::min(depth * depth, MAX_HISTORY_SCORE);
+    int& history_score = history_scores[board.get_to_move()][move::get_start_square(move)]
+                                       [move::get_target_square(move)];
+    history_score += bonus - (history_score * bonus / MAX_HISTORY_SCORE);
+}
+
 int Bot::get_move_priority(Move move, Move hash_move,
                            const std::array<Move, KILLER_MOVES_PER_PLY>& killers) const
 {
@@ -283,7 +294,8 @@ int Bot::get_move_priority(Move move, Move hash_move,
         {
             return SECOND_KILLER_MOVE_PRIORITY;
         }
-        return 0;
+        return history_scores[board.get_to_move()][move::get_start_square(move)]
+                             [move::get_target_square(move)];
     }
 
     int priority = NOISY_MOVE_PRIORITY;
@@ -306,12 +318,22 @@ int Bot::get_move_priority(Move move, Move hash_move,
 void Bot::order_moves(MoveList& moves, Move hash_move,
                       const std::array<Move, KILLER_MOVES_PER_PLY>& killers) const
 {
-    std::sort(moves.begin(), moves.end(),
-              [this, hash_move, &killers](Move a, Move b)
-              {
-                  return get_move_priority(a, hash_move, killers) >
-                         get_move_priority(b, hash_move, killers);
-              });
+    std::array<int, MoveList::MAX_MOVES> priorities{};
+    for (int i = 0; i < moves.size(); i++)
+    {
+        const Move move = moves[i];
+        const int priority = get_move_priority(move, hash_move, killers);
+
+        int j = i;
+        while (j > 0 && priorities[j - 1] < priority)
+        {
+            priorities[j] = priorities[j - 1];
+            moves[j] = moves[j - 1];
+            j--;
+        }
+        priorities[j] = priority;
+        moves[j] = move;
+    }
 }
 
 bool Bot::is_noisy(Move move) const

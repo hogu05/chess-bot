@@ -8,8 +8,10 @@
 #include <string>
 
 #include "board.hpp"
+#include "color.hpp"
 #include "move_generator.hpp"
 #include "move_list.hpp"
+#include "square.hpp"
 #include "transposition_table.hpp"
 #include "types.hpp"
 
@@ -40,11 +42,15 @@ class Bot
     static constexpr int NOISY_MOVE_PRIORITY = 1000000;
     static constexpr int FIRST_KILLER_MOVE_PRIORITY = 900000;
     static constexpr int SECOND_KILLER_MOVE_PRIORITY = 800000;
+    static constexpr int MAX_HISTORY_SCORE = 16384;
 
     Board board;
     MoveGenerator move_generator = MoveGenerator(board);
     TranspositionTable transposition_table;
     std::array<std::array<Move, KILLER_MOVES_PER_PLY>, MAX_DEPTH> killer_moves{};
+    std::array<std::array<std::array<int, square::TOTAL_SQUARES>, square::TOTAL_SQUARES>,
+               color::COLORS>
+        history_scores{};
     std::chrono::steady_clock::time_point search_deadline;
     int search_root_ply = 0;
     std::uint64_t searched_nodes = 0;
@@ -62,6 +68,8 @@ class Bot
     static int get_score_from_table(int table_score, int ply);
 
     void update_killer_moves(Move move, int ply);
+
+    void update_history_score(Move move, int depth);
 
     int get_move_priority(Move move, Move hash_move,
                           const std::array<Move, KILLER_MOVES_PER_PLY>& killers) const;
