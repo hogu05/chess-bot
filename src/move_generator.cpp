@@ -58,7 +58,20 @@ MoveList MoveGenerator::get_moves()
 
 bool MoveGenerator::is_check() const
 {
-    return checkers != 0;
+    const Color friendly_color = board.get_to_move();
+    const Color enemy_color = color::get_other_color(friendly_color);
+    const Square king_square = get_friendly_king_square();
+    const Bitboard all_pieces = board.get_all_pieces();
+    const Bitboard enemy_queens = board.get_pieces(piece::QUEEN, enemy_color);
+
+    return ((precomputations::pawn_attacks[friendly_color][king_square] &
+             board.get_pieces(piece::PAWN, enemy_color)) |
+            (precomputations::knight_moves[king_square] &
+             board.get_pieces(piece::KNIGHT, enemy_color)) |
+            (magic::get_slider_attacks(king_square, piece::BISHOP, all_pieces) &
+             (board.get_pieces(piece::BISHOP, enemy_color) | enemy_queens)) |
+            (magic::get_slider_attacks(king_square, piece::ROOK, all_pieces) &
+             (board.get_pieces(piece::ROOK, enemy_color) | enemy_queens))) != 0;
 }
 
 std::uint64_t MoveGenerator::perft(int depth)

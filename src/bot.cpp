@@ -108,6 +108,12 @@ std::uint64_t Bot::get_searched_nodes() const
 
 int Bot::search(int depth, int alpha, int beta, std::atomic<bool>& stop)
 {
+    const bool is_check = move_generator.is_check();
+    if (is_check)
+    {
+        depth++;
+    }
+
     if (depth <= 0)
     {
         return quiescence_search(alpha, beta, stop);
@@ -126,6 +132,11 @@ int Bot::search(int depth, int alpha, int beta, std::atomic<bool>& stop)
     }
 
     const int ply = board.get_ply() - search_root_ply;
+    if (ply >= MAX_DEPTH)
+    {
+        return evaluator::evaluate(board);
+    }
+
     Move hash_move = move::NONE_MOVE;
     const TranspositionTable::Entry* entry = transposition_table.probe(board.get_hash());
     if (entry != nullptr)
@@ -142,7 +153,6 @@ int Bot::search(int depth, int alpha, int beta, std::atomic<bool>& stop)
     }
 
     MoveList moves = move_generator.get_moves();
-    const bool is_check = move_generator.is_check();
     if (moves.empty())
     {
         return is_check ? -MATE_SCORE + ply : DRAW_SCORE;
