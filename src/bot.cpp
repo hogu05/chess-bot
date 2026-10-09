@@ -35,7 +35,7 @@ Move Bot::go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point dead
         for (const Move move : root_moves)
         {
             board.make_move(move);
-            const int score = -search(depth - 1, -INF, INF, false, stop);
+            const int score = -search(depth - 1, -INF, -best_score, false, stop);
             board.unmake_move(move);
 
             if (stop)
@@ -51,6 +51,7 @@ Move Bot::go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point dead
                 best_move = move;
             }
         }
+        root_move_scores[best_move] = INF;
     }
     return best_move;
 }
