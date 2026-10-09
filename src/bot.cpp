@@ -1,6 +1,7 @@
 #include "bot.hpp"
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <unordered_map>
@@ -14,6 +15,7 @@ Move Bot::go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point dead
     search_deadline = deadline;
     search_root_ply = board.get_ply();
     searched_nodes = 0;
+    killer_moves = {};
 
     MoveList legal_moves = move_generator.get_moves();
     if (legal_moves.empty())
@@ -24,7 +26,7 @@ Move Bot::go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point dead
     Move best_move = *legal_moves.begin();
     std::unordered_map<Move, int> root_move_scores;
 
-    for (int depth = 1; !stop && depth <= max_depth; depth++)
+    for (int depth = 1; !stop && depth <= std::min(max_depth, MAX_DEPTH); depth++)
     {
         int best_score = -INF;
         MoveList root_moves = move_generator.get_moves();
@@ -112,7 +114,7 @@ int Bot::search(int depth, int alpha, int beta, std::atomic<bool>& stop)
     }
 
     MoveList moves = move_generator.get_moves();
-    order_moves(moves, hash_move);
+    order_moves(moves, hash_move, killer_moves[ply]);
 
     Move best_move = move::NONE_MOVE;
     for (const Move move : moves)
@@ -128,6 +130,10 @@ int Bot::search(int depth, int alpha, int beta, std::atomic<bool>& stop)
 
         if (score >= beta)
         {
+            if (!is_noisy(move))
+            {
+                update_killer_moves(move, ply);
+            }
             transposition_table.store(board.get_hash(), depth, get_table_score(beta, ply),
                                       TranspositionTable::Bound::LOWER, move);
             return beta;
@@ -173,7 +179,7 @@ int Bot::quiescence_search(int alpha, int beta, std::atomic<bool>& stop)
     alpha = std::max(alpha, static_score);
 
     MoveList moves = move_generator.get_moves();
-    order_moves(moves, move::NONE_MOVE);
+    order_moves(moves, move::NONE_MOVE, {});
 
     bool found_move = false;
     for (const Move move : moves)
@@ -250,14 +256,37 @@ int Bot::get_score_from_table(int table_score, int ply)
     return table_score;
 }
 
-int Bot::get_move_priority(Move move, Move hash_move) const
+void Bot::update_killer_moves(Move move, int ply)
+{
+    if (killer_moves[ply][0] != move)
+    {
+        killer_moves[ply][1] = killer_moves[ply][0];
+        killer_moves[ply][0] = move;
+    }
+}
+
+int Bot::get_move_priority(Move move, Move hash_move,
+                           const std::array<Move, KILLER_MOVES_PER_PLY>& killers) const
 {
     if (move == hash_move)
     {
-        return INF;
+        return HASH_MOVE_PRIORITY;
     }
 
-    int priority = 0;
+    if (!is_noisy(move))
+    {
+        if (move == killers[0])
+        {
+            return FIRST_KILLER_MOVE_PRIORITY;
+        }
+        if (move == killers[1])
+        {
+            return SECOND_KILLER_MOVE_PRIORITY;
+        }
+        return 0;
+    }
+
+    int priority = NOISY_MOVE_PRIORITY;
     const PieceType captured_piece_type = piece::get_piece_type(board.get_captured_piece(move));
 
     if (captured_piece_type != piece::NONE)
@@ -274,10 +303,15 @@ int Bot::get_move_priority(Move move, Move hash_move) const
     return priority;
 }
 
-void Bot::order_moves(MoveList& moves, Move hash_move) const
+void Bot::order_moves(MoveList& moves, Move hash_move,
+                      const std::array<Move, KILLER_MOVES_PER_PLY>& killers) const
 {
-    std::sort(moves.begin(), moves.end(), [this, hash_move](Move a, Move b)
-              { return get_move_priority(a, hash_move) > get_move_priority(b, hash_move); });
+    std::sort(moves.begin(), moves.end(),
+              [this, hash_move, &killers](Move a, Move b)
+              {
+                  return get_move_priority(a, hash_move, killers) >
+                         get_move_priority(b, hash_move, killers);
+              });
 }
 
 bool Bot::is_noisy(Move move) const

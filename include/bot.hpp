@@ -1,6 +1,7 @@
 #ifndef BOT_H
 #define BOT_H
 
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
@@ -34,10 +35,16 @@ class Bot
     static constexpr int FIFTY_MOVE_RULE_PLIES = 100;
     static constexpr int INF = 1000000;
     static constexpr int DEADLINE_CHECK_INTERVAL = 2048;
+    static constexpr int KILLER_MOVES_PER_PLY = 2;
+    static constexpr int HASH_MOVE_PRIORITY = 2000000;
+    static constexpr int NOISY_MOVE_PRIORITY = 1000000;
+    static constexpr int FIRST_KILLER_MOVE_PRIORITY = 900000;
+    static constexpr int SECOND_KILLER_MOVE_PRIORITY = 800000;
 
     Board board;
     MoveGenerator move_generator = MoveGenerator(board);
     TranspositionTable transposition_table;
+    std::array<std::array<Move, KILLER_MOVES_PER_PLY>, MAX_DEPTH> killer_moves{};
     std::chrono::steady_clock::time_point search_deadline;
     int search_root_ply = 0;
     std::uint64_t searched_nodes = 0;
@@ -54,9 +61,13 @@ class Bot
 
     static int get_score_from_table(int table_score, int ply);
 
-    int get_move_priority(Move move, Move hash_move) const;
+    void update_killer_moves(Move move, int ply);
 
-    void order_moves(MoveList& moves, Move hash_move) const;
+    int get_move_priority(Move move, Move hash_move,
+                          const std::array<Move, KILLER_MOVES_PER_PLY>& killers) const;
+
+    void order_moves(MoveList& moves, Move hash_move,
+                     const std::array<Move, KILLER_MOVES_PER_PLY>& killers) const;
 
     bool is_noisy(Move move) const;
 };
