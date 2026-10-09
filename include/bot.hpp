@@ -48,6 +48,10 @@ class Bot
     static constexpr int LATE_MOVE_MIN_DEPTH = 3;
     static constexpr int LATE_MOVE_MIN_INDEX = 3;
     static constexpr int LATE_MOVE_REDUCTION = 1;
+    static constexpr int REVERSE_FUTILITY_MAX_DEPTH = 6;
+    static constexpr int REVERSE_FUTILITY_MARGIN = 100;
+    static constexpr int FUTILITY_MAX_DEPTH = 2;
+    static constexpr int FUTILITY_MARGIN = 150;
 
     Board board;
     MoveGenerator move_generator = MoveGenerator(board);

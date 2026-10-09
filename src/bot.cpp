@@ -121,6 +121,13 @@ int Bot::search(int depth, int alpha, int beta, std::atomic<bool>& stop)
         return is_check ? -MATE_SCORE + ply : DRAW_SCORE;
     }
 
+    const int static_score = evaluator::evaluate(board);
+    if (depth <= REVERSE_FUTILITY_MAX_DEPTH && beta - alpha == 1 && !is_check &&
+        static_score - (REVERSE_FUTILITY_MARGIN * depth) >= beta)
+    {
+        return beta;
+    }
+
     if (depth >= NULL_MOVE_MIN_DEPTH && beta - alpha == 1 && !is_check &&
         board.has_non_pawn_material(board.get_to_move()))
     {
@@ -136,10 +143,17 @@ int Bot::search(int depth, int alpha, int beta, std::atomic<bool>& stop)
 
     order_moves(moves, hash_move, killer_moves[ply]);
 
+    const bool is_futile = depth <= FUTILITY_MAX_DEPTH && beta - alpha == 1 && !is_check &&
+                           static_score + (FUTILITY_MARGIN * depth) <= alpha;
     Move best_move = move::NONE_MOVE;
     for (int i = 0; i < moves.size(); i++)
     {
         const Move move = moves[i];
+        if (is_futile && i > 0 && !is_noisy(move))
+        {
+            continue;
+        }
+
         const int score =
             search_move(move, i == 0, depth, get_late_move_reduction(move, i, depth, is_check),
                         alpha, beta, stop);
