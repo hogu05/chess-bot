@@ -4,12 +4,39 @@
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <cmath>
 #include <unordered_map>
 
 #include "evaluator.hpp"
 #include "move.hpp"
 #include "move_list.hpp"
 #include "piece.hpp"
+
+namespace
+{
+constexpr int LATE_MOVE_TABLE_SIZE = 64;
+constexpr double LATE_MOVE_REDUCTION_BASE = 0.75;
+constexpr double LATE_MOVE_REDUCTION_DIVISOR = 2.25;
+
+std::array<std::array<int, LATE_MOVE_TABLE_SIZE>, LATE_MOVE_TABLE_SIZE>
+compute_late_move_reductions()
+{
+    std::array<std::array<int, LATE_MOVE_TABLE_SIZE>, LATE_MOVE_TABLE_SIZE> late_move_reductions{};
+    for (int depth = 1; depth < LATE_MOVE_TABLE_SIZE; depth++)
+    {
+        for (int move_index = 1; move_index < LATE_MOVE_TABLE_SIZE; move_index++)
+        {
+            late_move_reductions[depth][move_index] = static_cast<int>(
+                LATE_MOVE_REDUCTION_BASE +
+                (std::log(depth) * std::log(move_index) / LATE_MOVE_REDUCTION_DIVISOR));
+        }
+    }
+    return late_move_reductions;
+}
+
+const std::array<std::array<int, LATE_MOVE_TABLE_SIZE>, LATE_MOVE_TABLE_SIZE> late_move_reductions =
+    compute_late_move_reductions();
+} // namespace
 
 Move Bot::go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point deadline, int max_depth)
 {
@@ -317,7 +344,9 @@ int Bot::get_late_move_reduction(Move move, int move_index, int depth, bool is_c
     if (depth >= LATE_MOVE_MIN_DEPTH && move_index >= LATE_MOVE_MIN_INDEX && !is_check &&
         !is_noisy(move))
     {
-        return LATE_MOVE_REDUCTION;
+        return std::min(late_move_reductions[std::min(depth, LATE_MOVE_TABLE_SIZE - 1)]
+                                            [std::min(move_index, LATE_MOVE_TABLE_SIZE - 1)],
+                        depth - 2);
     }
     return 0;
 }
