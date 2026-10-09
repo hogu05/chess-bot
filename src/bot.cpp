@@ -35,7 +35,7 @@ Move Bot::go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point dead
         for (const Move move : root_moves)
         {
             board.make_move(move);
-            const int score = -search(depth - 1, -INF, -best_score, false, stop);
+            const int score = -search(depth - 1, -INF, -best_score, stop);
             board.unmake_move(move);
 
             if (stop)
@@ -76,61 +76,121 @@ std::uint64_t Bot::get_searched_nodes() const
     return searched_nodes;
 }
 
-int Bot::search(int depth, int alpha, int beta, bool is_quiescence, std::atomic<bool>& stop)
+int Bot::search(int depth, int alpha, int beta, std::atomic<bool>& stop)
 {
-    searched_nodes++;
-    if (searched_nodes % DEADLINE_CHECK_INTERVAL == 0 &&
-        std::chrono::steady_clock::now() >= search_deadline)
+    if (depth == 0)
     {
-        stop = true;
+        return quiescence_search(alpha, beta, stop);
     }
 
+    searched_nodes++;
+    check_deadline(stop);
     if (stop)
     {
         return 0;
     }
 
-    if (board.is_repetition(search_root_ply))
+    if (is_draw())
     {
-        return REPETITION_SCORE;
+        return DRAW_SCORE;
     }
 
-    if (board.get_fifty_move_ply() >= FIFTY_MOVE_RULE_PLIES &&
-        !(move_generator.get_moves().empty() && move_generator.is_check()))
+    const int ply = board.get_ply() - search_root_ply;
+    Move hash_move = move::NONE_MOVE;
+    const TranspositionTable::Entry* entry = transposition_table.probe(board.get_hash());
+    if (entry != nullptr)
     {
-        return FIFTY_MOVE_RULE_SCORE;
-    }
-
-    if (depth == 0)
-    {
-        is_quiescence = true;
-    }
-
-    int static_score = 0;
-    if (is_quiescence)
-    {
-        static_score = evaluator::evaluate(board);
-        if (static_score >= beta)
+        hash_move = entry->best_move;
+        const int entry_score = get_score_from_table(entry->score, ply);
+        if (entry->depth >= depth &&
+            (entry->bound == TranspositionTable::Bound::EXACT ||
+             (entry->bound == TranspositionTable::Bound::LOWER && entry_score >= beta) ||
+             (entry->bound == TranspositionTable::Bound::UPPER && entry_score <= alpha)))
         {
-            return beta;
+            return std::clamp(entry_score, alpha, beta);
         }
-        alpha = std::max(alpha, static_score);
     }
 
     MoveList moves = move_generator.get_moves();
-    order_moves(moves);
+    order_moves(moves, hash_move);
+
+    Move best_move = move::NONE_MOVE;
+    for (const Move move : moves)
+    {
+        board.make_move(move);
+        const int score = -search(depth - 1, -beta, -alpha, stop);
+        board.unmake_move(move);
+
+        if (stop)
+        {
+            return 0;
+        }
+
+        if (score >= beta)
+        {
+            transposition_table.store(board.get_hash(), depth, get_table_score(beta, ply),
+                                      TranspositionTable::Bound::LOWER, move);
+            return beta;
+        }
+        if (score > alpha)
+        {
+            alpha = score;
+            best_move = move;
+        }
+    }
+
+    if (moves.empty())
+    {
+        return move_generator.is_check() ? -MATE_SCORE + ply : DRAW_SCORE;
+    }
+
+    transposition_table.store(board.get_hash(), depth, get_table_score(alpha, ply),
+                              best_move != move::NONE_MOVE ? TranspositionTable::Bound::EXACT
+                                                           : TranspositionTable::Bound::UPPER,
+                              best_move);
+    return alpha;
+}
+
+int Bot::quiescence_search(int alpha, int beta, std::atomic<bool>& stop)
+{
+    searched_nodes++;
+    check_deadline(stop);
+    if (stop)
+    {
+        return 0;
+    }
+
+    if (is_draw())
+    {
+        return DRAW_SCORE;
+    }
+
+    const int static_score = evaluator::evaluate(board);
+    if (static_score >= beta)
+    {
+        return beta;
+    }
+    alpha = std::max(alpha, static_score);
+
+    MoveList moves = move_generator.get_moves();
+    order_moves(moves, move::NONE_MOVE);
 
     bool found_move = false;
     for (const Move move : moves)
     {
-        if (is_quiescence && !is_noisy(move))
+        if (!is_noisy(move))
         {
             continue;
         }
 
         board.make_move(move);
-        const int score = -search(depth - 1, -beta, -alpha, is_quiescence, stop);
+        const int score = -quiescence_search(-beta, -alpha, stop);
         board.unmake_move(move);
+
+        if (stop)
+        {
+            return 0;
+        }
 
         found_move = true;
         if (score >= beta)
@@ -140,21 +200,63 @@ int Bot::search(int depth, int alpha, int beta, bool is_quiescence, std::atomic<
         alpha = std::max(alpha, score);
     }
 
-    if (!found_move && is_quiescence)
-    {
-        return static_score;
-    }
-
     if (!found_move)
     {
-        return move_generator.is_check() ? -MATE_SCORE - (depth * 1000) : STALEMATE_SCORE;
+        return static_score;
     }
 
     return alpha;
 }
 
-int Bot::get_move_priority(Move move) const
+void Bot::check_deadline(std::atomic<bool>& stop) const
 {
+    if (searched_nodes % DEADLINE_CHECK_INTERVAL == 0 &&
+        std::chrono::steady_clock::now() >= search_deadline)
+    {
+        stop = true;
+    }
+}
+
+bool Bot::is_draw()
+{
+    return board.is_repetition(search_root_ply) ||
+           (board.get_fifty_move_ply() >= FIFTY_MOVE_RULE_PLIES &&
+            !(move_generator.get_moves().empty() && move_generator.is_check()));
+}
+
+int Bot::get_table_score(int score, int ply)
+{
+    if (score >= MATE_THRESHOLD)
+    {
+        return score + ply;
+    }
+    if (score <= -MATE_THRESHOLD)
+    {
+        return score - ply;
+    }
+    return score;
+}
+
+int Bot::get_score_from_table(int table_score, int ply)
+{
+    if (table_score >= MATE_THRESHOLD)
+    {
+        return table_score - ply;
+    }
+    if (table_score <= -MATE_THRESHOLD)
+    {
+        return table_score + ply;
+    }
+    return table_score;
+}
+
+int Bot::get_move_priority(Move move, Move hash_move) const
+{
+    if (move == hash_move)
+    {
+        return INF;
+    }
+
     int priority = 0;
     const PieceType captured_piece_type = piece::get_piece_type(board.get_captured_piece(move));
 
@@ -172,10 +274,10 @@ int Bot::get_move_priority(Move move) const
     return priority;
 }
 
-void Bot::order_moves(MoveList& moves) const
+void Bot::order_moves(MoveList& moves, Move hash_move) const
 {
-    std::sort(moves.begin(), moves.end(),
-              [this](Move a, Move b) { return get_move_priority(a) > get_move_priority(b); });
+    std::sort(moves.begin(), moves.end(), [this, hash_move](Move a, Move b)
+              { return get_move_priority(a, hash_move) > get_move_priority(b, hash_move); });
 }
 
 bool Bot::is_noisy(Move move) const

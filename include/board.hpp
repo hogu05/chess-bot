@@ -101,6 +101,11 @@ class Board
         return ply;
     }
 
+    constexpr std::uint64_t get_hash() const
+    {
+        return hash;
+    }
+
   private:
     static constexpr std::array<Square, color::COLORS> KING_START_SQUARE = {square::e1, square::e8};
     static constexpr std::array<Square, color::COLORS> QUEENSIDE_ROOK_START_SQUARE = {square::a1,
