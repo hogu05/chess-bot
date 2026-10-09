@@ -43,6 +43,8 @@ class Bot
     static constexpr int FIRST_KILLER_MOVE_PRIORITY = 900000;
     static constexpr int SECOND_KILLER_MOVE_PRIORITY = 800000;
     static constexpr int MAX_HISTORY_SCORE = 16384;
+    static constexpr int NULL_MOVE_MIN_DEPTH = 3;
+    static constexpr int NULL_MOVE_REDUCTION = 2;
 
     Board board;
     MoveGenerator move_generator = MoveGenerator(board);

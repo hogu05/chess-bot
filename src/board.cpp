@@ -246,6 +246,30 @@ void Board::unmake_move(Move move)
     position_info = previous_position_info;
 }
 
+void Board::make_null_move()
+{
+    previous_hashes[ply] = hash;
+    previous_positions[ply] = position_info;
+    ply++;
+
+    PositionInfo new_position_info = 0;
+    position_info::set_castling_rights(new_position_info,
+                                       position_info::get_castling_rights(position_info));
+    position_info::set_to_move(new_position_info, color::get_other_color(get_to_move()));
+
+    hasher::update_to_move(hash);
+    hasher::update_en_passant(hash, position_info::get_en_passant_file(position_info));
+    hasher::update_en_passant(hash, position_info::get_en_passant_file(new_position_info));
+    position_info = new_position_info;
+}
+
+void Board::unmake_null_move()
+{
+    ply--;
+    position_info = previous_positions[ply];
+    hash = previous_hashes[ply];
+}
+
 bool Board::is_repetition(int root_ply) const
 {
     int game_repetitions = 0;

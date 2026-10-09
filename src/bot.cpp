@@ -81,7 +81,7 @@ std::uint64_t Bot::get_searched_nodes() const
 
 int Bot::search(int depth, int alpha, int beta, std::atomic<bool>& stop)
 {
-    if (depth == 0)
+    if (depth <= 0)
     {
         return quiescence_search(alpha, beta, stop);
     }
@@ -115,6 +115,24 @@ int Bot::search(int depth, int alpha, int beta, std::atomic<bool>& stop)
     }
 
     MoveList moves = move_generator.get_moves();
+    if (moves.empty())
+    {
+        return move_generator.is_check() ? -MATE_SCORE + ply : DRAW_SCORE;
+    }
+
+    if (depth >= NULL_MOVE_MIN_DEPTH && beta - alpha == 1 && !move_generator.is_check() &&
+        board.has_non_pawn_material(board.get_to_move()))
+    {
+        board.make_null_move();
+        const int score = -search(depth - 1 - NULL_MOVE_REDUCTION, -beta, -beta + 1, stop);
+        board.unmake_null_move();
+
+        if (score >= beta)
+        {
+            return beta;
+        }
+    }
+
     order_moves(moves, hash_move, killer_moves[ply]);
 
     Move best_move = move::NONE_MOVE;
@@ -143,11 +161,6 @@ int Bot::search(int depth, int alpha, int beta, std::atomic<bool>& stop)
             alpha = score;
             best_move = move;
         }
-    }
-
-    if (moves.empty())
-    {
-        return move_generator.is_check() ? -MATE_SCORE + ply : DRAW_SCORE;
     }
 
     transposition_table.store(board.get_hash(), depth, get_table_score(alpha, ply),

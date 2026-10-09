@@ -28,6 +28,10 @@ class Board
 
     void unmake_move(Move move);
 
+    void make_null_move();
+
+    void unmake_null_move();
+
     bool is_repetition(int root_ply) const;
 
     constexpr const std::array<Piece, square::TOTAL_SQUARES>& get_squares() const
@@ -69,6 +73,12 @@ class Board
     constexpr Square get_king_square(Color color) const
     {
         return bitboard::get_square(get_pieces(piece::KING, color));
+    }
+
+    constexpr bool has_non_pawn_material(Color color) const
+    {
+        return get_pieces(color) !=
+               (get_pieces(piece::PAWN, color) | get_pieces(piece::KING, color));
     }
 
     constexpr Color get_to_move() const
