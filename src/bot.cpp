@@ -39,7 +39,7 @@ Move Bot::go(std::atomic<bool>& stop, std::chrono::steady_clock::time_point dead
         for (const Move move : root_moves)
         {
             const int score =
-                search_move(move, move == root_moves[0], depth, best_score, INF, stop);
+                search_move(move, move == root_moves[0], depth, 0, best_score, INF, stop);
 
             if (stop)
             {
@@ -115,12 +115,13 @@ int Bot::search(int depth, int alpha, int beta, std::atomic<bool>& stop)
     }
 
     MoveList moves = move_generator.get_moves();
+    const bool is_check = move_generator.is_check();
     if (moves.empty())
     {
-        return move_generator.is_check() ? -MATE_SCORE + ply : DRAW_SCORE;
+        return is_check ? -MATE_SCORE + ply : DRAW_SCORE;
     }
 
-    if (depth >= NULL_MOVE_MIN_DEPTH && beta - alpha == 1 && !move_generator.is_check() &&
+    if (depth >= NULL_MOVE_MIN_DEPTH && beta - alpha == 1 && !is_check &&
         board.has_non_pawn_material(board.get_to_move()))
     {
         board.make_null_move();
@@ -136,9 +137,12 @@ int Bot::search(int depth, int alpha, int beta, std::atomic<bool>& stop)
     order_moves(moves, hash_move, killer_moves[ply]);
 
     Move best_move = move::NONE_MOVE;
-    for (const Move move : moves)
+    for (int i = 0; i < moves.size(); i++)
     {
-        const int score = search_move(move, move == moves[0], depth, alpha, beta, stop);
+        const Move move = moves[i];
+        const int score =
+            search_move(move, i == 0, depth, get_late_move_reduction(move, i, depth, is_check),
+                        alpha, beta, stop);
 
         if (stop)
         {
@@ -170,7 +174,7 @@ int Bot::search(int depth, int alpha, int beta, std::atomic<bool>& stop)
     return alpha;
 }
 
-int Bot::search_move(Move move, bool is_first_move, int depth, int alpha, int beta,
+int Bot::search_move(Move move, bool is_first_move, int depth, int reduction, int alpha, int beta,
                      std::atomic<bool>& stop)
 {
     board.make_move(move);
@@ -181,7 +185,11 @@ int Bot::search_move(Move move, bool is_first_move, int depth, int alpha, int be
     }
     else
     {
-        score = -search(depth - 1, -alpha - 1, -alpha, stop);
+        score = -search(depth - 1 - reduction, -alpha - 1, -alpha, stop);
+        if (score > alpha && reduction > 0)
+        {
+            score = -search(depth - 1, -alpha - 1, -alpha, stop);
+        }
         if (score > alpha && score < beta)
         {
             score = -search(depth - 1, -beta, -alpha, stop);
@@ -288,6 +296,16 @@ int Bot::get_score_from_table(int table_score, int ply)
         return table_score + ply;
     }
     return table_score;
+}
+
+int Bot::get_late_move_reduction(Move move, int move_index, int depth, bool is_check) const
+{
+    if (depth >= LATE_MOVE_MIN_DEPTH && move_index >= LATE_MOVE_MIN_INDEX && !is_check &&
+        !is_noisy(move))
+    {
+        return LATE_MOVE_REDUCTION;
+    }
+    return 0;
 }
 
 void Bot::update_killer_moves(Move move, int ply)

@@ -45,6 +45,9 @@ class Bot
     static constexpr int MAX_HISTORY_SCORE = 16384;
     static constexpr int NULL_MOVE_MIN_DEPTH = 3;
     static constexpr int NULL_MOVE_REDUCTION = 2;
+    static constexpr int LATE_MOVE_MIN_DEPTH = 3;
+    static constexpr int LATE_MOVE_MIN_INDEX = 3;
+    static constexpr int LATE_MOVE_REDUCTION = 1;
 
     Board board;
     MoveGenerator move_generator = MoveGenerator(board);
@@ -59,7 +62,7 @@ class Bot
 
     int search(int depth, int alpha, int beta, std::atomic<bool>& stop);
 
-    int search_move(Move move, bool is_first_move, int depth, int alpha, int beta,
+    int search_move(Move move, bool is_first_move, int depth, int reduction, int alpha, int beta,
                     std::atomic<bool>& stop);
 
     int quiescence_search(int alpha, int beta, std::atomic<bool>& stop);
@@ -71,6 +74,8 @@ class Bot
     static int get_table_score(int score, int ply);
 
     static int get_score_from_table(int table_score, int ply);
+
+    int get_late_move_reduction(Move move, int move_index, int depth, bool is_check) const;
 
     void update_killer_moves(Move move, int ply);
 
